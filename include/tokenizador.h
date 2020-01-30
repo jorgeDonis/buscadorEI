@@ -6,8 +6,11 @@
 
 class Tokenizador
 {
+    friend std::ostream& operator<<(std::ostream&, const Tokenizador&);
     private:
         std::string delimiters;
+        bool casosEspeciales;
+        bool pasarAminuscSinAcentos;
 };
 
 #endif
