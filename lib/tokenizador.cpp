@@ -19,14 +19,18 @@ void remove_duplicate_string(string& str)
 {
     if (str.length() > 1)
     {
-        sort(str.begin(), str.end());
         string::iterator it = str.begin();
+        string::iterator found_it;
         while (it != str.end())
         {
-            while (it != str.end() && *it == *next(it, 1))
-                str.erase(it);
-            if (it != str.end())
-                it++;
+            found_it = it;
+            while (found_it != str.end())
+            {
+                found_it = find(it + 1, str.end(), *it);
+                if (found_it != str.end())
+                    str.erase(found_it);
+            }
+            it++;
         }
     }
 }
