@@ -38,6 +38,7 @@ void remove_duplicate_string(string& str)
 Tokenizador::Tokenizador()
 {
     delimiters = Tokenizador::DEFAULT_DELIMITERS;
+    delimiters_set.insert(delimiters.begin(), delimiters.end());
     casosEspeciales = Tokenizador::CASOS_ESPECIALES_DEFAULT;
     pasarAminuscSinAcentos = Tokenizador::PASAR_MINUSC_DEFAULT;
 }
@@ -46,6 +47,7 @@ Tokenizador::Tokenizador(const string& delimitadoresPalabra, const bool& kCasosE
                          const bool& minuscSinAcentos)
 {
     delimiters = delimitadoresPalabra;
+    delimiters_set.insert(delimiters.begin(), delimiters.end());
     remove_duplicate_string(delimiters);
     casosEspeciales = kCasosEspeciales;
     pasarAminuscSinAcentos = minuscSinAcentos;
@@ -54,6 +56,7 @@ Tokenizador::Tokenizador(const string& delimitadoresPalabra, const bool& kCasosE
 void Tokenizador::copy_values(const Tokenizador& tokenizador)
 {
     this->delimiters = tokenizador.delimiters;
+    delimiters_set.insert(delimiters.begin(), delimiters.end());
     this->pasarAminuscSinAcentos = tokenizador.pasarAminuscSinAcentos;
     this->casosEspeciales = tokenizador.casosEspeciales;
 }
@@ -68,4 +71,25 @@ Tokenizador& Tokenizador::operator=(const Tokenizador& tokenizador)
     if (this != &tokenizador)
         copy_values(tokenizador);
     return *this;
+}
+
+bool Tokenizador::is_delimiter(const char& foo) const
+{
+    return (delimiters_set.find(foo) != delimiters_set.end());
+}
+
+void Tokenizador::Tokenizar(const string& str, list<string>& tokens) const
+{
+    string::size_type izquierda = 0;
+    string::size_type derecha = 0;
+    while (derecha != str.size())
+    {
+        while (izquierda != str.size() && is_delimiter(str[izquierda]))
+            izquierda++;
+        derecha = izquierda;
+        while (derecha != str.size() && !is_delimiter(str[derecha]))
+            derecha++;
+        tokens.push_back(str.substr(izquierda, derecha - izquierda));
+        izquierda = derecha + 1;
+    }
 }
