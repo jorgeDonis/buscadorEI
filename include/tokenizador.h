@@ -13,6 +13,8 @@ class Tokenizador
         static const bool CASOS_ESPECIALES_DEFAULT;
         static const bool PASAR_MINUSC_DEFAULT;
         static const std::string DEFAULT_DELIMITERS;
+        static char MAPA_ACENTOS[256];
+        static void init_mapa_acentos();
         std::string delimiters;
         //Contiene todos los delimitadores en una tabla hash        
         std::unordered_set<char> delimiters_set;
@@ -25,7 +27,8 @@ class Tokenizador
         Tokenizador(const std::string&, const bool&, const bool&);
         Tokenizador(const Tokenizador&);
         Tokenizador& operator=(const Tokenizador&);
-        void Tokenizar(const std::string&, std::list<std::string>&) const;
+        void Tokenizar(std::string&, std::list<std::string>&) const;
+        bool Tokenizar(const std::string&, const std::string&) const;
 };
 
 #endif

@@ -1,4 +1,5 @@
 #include "tokenizador.h"
+#include <fstream>
 #include <algorithm>
 
 using namespace std;
@@ -13,6 +14,11 @@ ostream& operator<<(ostream& os, const Tokenizador& tokenizador)
     os << tokenizador.casosEspeciales << " PASAR A MINUSCULAS Y SIN ACENTOS: ";
     os << tokenizador.pasarAminuscSinAcentos;
     return os;
+}
+
+void Tokenizador::init_mapa_acentos()
+{
+
 }
 
 void remove_duplicate_string(string& str)
@@ -78,18 +84,55 @@ bool Tokenizador::is_delimiter(const char& foo) const
     return (delimiters_set.find(foo) != delimiters_set.end());
 }
 
-void Tokenizador::Tokenizar(const string& str, list<string>& tokens) const
+
+
+void Tokenizador::Tokenizar(string& str, list<string>& tokens) const
 {
-    string::size_type izquierda = 0;
-    string::size_type derecha = 0;
-    while (derecha != str.size())
+    //TODO: casos especiales
+    if (pasarAminuscSinAcentos)
+    tokens.erase(tokens.begin(), tokens.end());
+    string::iterator izquierda = str.begin();
+    string::iterator derecha = str.begin();
+    while (derecha != str.end())
     {
-        while (izquierda != str.size() && is_delimiter(str[izquierda]))
+        while (izquierda != str.end() && is_delimiter(*izquierda))
             izquierda++;
         derecha = izquierda;
-        while (derecha != str.size() && !is_delimiter(str[derecha]))
+        while (derecha != str.end() && !is_delimiter(*derecha))
             derecha++;
-        tokens.push_back(str.substr(izquierda, derecha - izquierda));
+        tokens.push_back(string(izquierda, derecha));
         izquierda = derecha + 1;
     }
+}
+
+bool Tokenizador::Tokenizar(const string& input_filename, const string& output_filename) const
+{
+    //TODO: optimizar con https://gist.github.com/marcetcheverry/991042
+    ifstream ifs(input_filename);
+    list<string> tokens;
+    if (ifs.is_open())
+    {
+        string str;
+        ifs.seekg(0, ios::end);
+        str.reserve(ifs.tellg());
+        ifs.seekg(0, ios::beg);
+        str.assign(istreambuf_iterator<char>(ifs), istreambuf_iterator<char>());
+        Tokenizar(str, tokens);
+    }
+    else
+    {
+        cerr << "ERROR: No existe el archivo: " << input_filename << endl;
+        return false;
+    }
+    ofstream ofs(output_filename);
+    if (ofs.is_open())
+    {
+
+    }
+    else
+    {
+        cerr << "ERROR: Error al crear el fichero: " << output_filename << endl;
+        return false;
+    }
+    return true;
 }
