@@ -14,12 +14,13 @@ class Tokenizador
         static const bool PASAR_MINUSC_DEFAULT;
         static const std::string DEFAULT_DELIMITERS;
         static const short MAPA_ACENTOS[256];
+        static const std::string DEFAULT_FILELIST_FILENAME;
         static void minusc_sin_acentos(std::string&);
         std::string delimiters;
         //Contiene todos los delimitadores en una tabla hash        
         std::unordered_set<char> delimiters_set;
-        static bool is_dir(std::string&);
-        static bool file_exists(std::string&);
+        static bool is_dir(const std::string&);
+        static bool file_exists(const std::string&);
         bool is_delimiter(const char&) const;
         bool casosEspeciales;
         bool pasarAminuscSinAcentos;
@@ -34,6 +35,7 @@ class Tokenizador
         bool Tokenizar(const std::string&, const std::string&) const;
         bool Tokenizar(const std::string&) const;
         bool TokenizarListaFicheros(const std::string&) const;
+        bool TokenizarDirectorio(const std::string&) const;
 };
 
 #endif

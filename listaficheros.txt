@@ -1,2 +1,0 @@
-corpus_1.txt
-src

@@ -3,13 +3,13 @@
 #include <algorithm>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
 
 using namespace std;
 
 const bool Tokenizador::CASOS_ESPECIALES_DEFAULT = true;
 const bool Tokenizador::PASAR_MINUSC_DEFAULT = false;
 const string Tokenizador::DEFAULT_DELIMITERS = ",;:.-/+*\\ '\"{}[]()<>¡!¿?&#=\t\n\r@";
+const string Tokenizador::DEFAULT_FILELIST_FILENAME = ".lista_ficheros";
 const short Tokenizador::MAPA_ACENTOS[256] =
 {
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 
@@ -45,14 +45,14 @@ void Tokenizador::minusc_sin_acentos(string& foo)
         foo[i] = Tokenizador::MAPA_ACENTOS[(unsigned char) foo[i]];
 }
 
-bool Tokenizador::is_dir(string& filename)
+bool Tokenizador::is_dir(const string& filename)
 {
     struct stat buf;
     stat(filename.c_str(), &buf);
     return S_ISDIR(buf.st_mode);
 }
 
-bool Tokenizador::file_exists(string& filename)
+bool Tokenizador::file_exists(const string& filename)
 {
     struct stat buffer;
     return (stat(filename.c_str(), &buffer) == 0);
@@ -216,11 +216,36 @@ bool Tokenizador::TokenizarListaFicheros(const string& i) const
             }
             execution_is_right = (execution_is_right && Tokenizar(str));
         }
+        ifs.close();
     }
     else
     {
         cerr << "ERROR: No existe el fichero " << i << endl;
         execution_is_right = false;
+    }
+    return execution_is_right;
+}
+
+bool Tokenizador::TokenizarDirectorio(const string& i) const
+{
+    //TODO fallo porque me coje el directorio raiz tambien como si fuera un fichero
+    bool execution_is_right = true;
+    if (!Tokenizador::file_exists(i))
+    {
+        cerr << "ERROR: El directorio " << i << " no existe" << endl;
+        execution_is_right = false;
+    }
+    else if (!Tokenizador::is_dir(i))
+    {
+        cerr << "ERROR: El fichero " << i << " no es un directorio" << endl;
+        execution_is_right = false;
+    }
+    else
+    {
+        string cmd = "find " + i + " -follow |sort > " + Tokenizador::DEFAULT_FILELIST_FILENAME;
+        system(cmd.c_str());
+        execution_is_right = (execution_is_right && 
+                            TokenizarListaFicheros(Tokenizador::DEFAULT_FILELIST_FILENAME));
     }
     return execution_is_right;
 }

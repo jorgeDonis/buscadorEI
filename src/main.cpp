@@ -14,9 +14,9 @@ int main()
     // string foo(prueba_char);
     // cout << "string = " << foo << endl;
     // list<string> tokens = list<string>();
-    bool execution_is_right = tokenizador.TokenizarListaFicheros("listaficheros.txt");
+    bool execution_is_right = tokenizador.TokenizarDirectorio("corpus");
     if (execution_is_right)
-        cout << "Execution is OK" << endl;
+        cout << "Execution is OK" << endl;  
     else
         cout << "Execution is not OK" << endl;
     // cout << "[";
