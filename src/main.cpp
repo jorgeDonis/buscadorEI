@@ -6,20 +6,21 @@ using namespace std;
 
 int main()
 {
-    // Tokenizador tokenizador;
-    // string prueba = "puede ser\"que no vaya tan horrendamente";
+    Tokenizador tokenizador;
+    // int prueba[100] = {225, 225, 225, 32, 225, 255};
+    // char prueba_char[100];
+    // for (int i = 0; i < 6; i++)
+    //     prueba_char[i] = prueba[i];
+    // string foo(prueba_char);
+    // cout << "string = " << foo << endl;
     // list<string> tokens = list<string>();
-    // tokenizador.Tokenizar(prueba, tokens);
+    bool execution_is_right = tokenizador.TokenizarListaFicheros("listaficheros.txt");
+    if (execution_is_right)
+        cout << "Execution is OK" << endl;
+    else
+        cout << "Execution is not OK" << endl;
     // cout << "[";
     // for (list<string>::iterator it = tokens.begin(); it != tokens.end(); ++it)
     //     cout << *it << "|";
     // cout << "\b]" << endl;
-    int prueba[100] = {232, 233, 225, 224, 250, 249};
-    char prueba_char[100];
-    for (int i = 0; i < 6; i++)
-        prueba_char[i] = prueba[i];
-    string foo(prueba_char);
-    cout << "string = " << foo << endl;
-    Tokenizador::minusc_sin_acentos(foo);
-    cout << "string = " << foo << endl;
 }

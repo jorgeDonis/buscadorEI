@@ -14,21 +14,26 @@ class Tokenizador
         static const bool PASAR_MINUSC_DEFAULT;
         static const std::string DEFAULT_DELIMITERS;
         static const short MAPA_ACENTOS[256];
+        static void minusc_sin_acentos(std::string&);
         std::string delimiters;
         //Contiene todos los delimitadores en una tabla hash        
         std::unordered_set<char> delimiters_set;
+        static bool is_dir(std::string&);
+        static bool file_exists(std::string&);
         bool is_delimiter(const char&) const;
         bool casosEspeciales;
         bool pasarAminuscSinAcentos;
         void copy_values(const Tokenizador&);
     public:
-        static void minusc_sin_acentos(std::string&);
         Tokenizador();
+        ~Tokenizador();
         Tokenizador(const std::string&, const bool&, const bool&);
         Tokenizador(const Tokenizador&);
         Tokenizador& operator=(const Tokenizador&);
         void Tokenizar(std::string&, std::list<std::string>&) const;
         bool Tokenizar(const std::string&, const std::string&) const;
+        bool Tokenizar(const std::string&) const;
+        bool TokenizarListaFicheros(const std::string&) const;
 };
 
 #endif

@@ -1,6 +1,9 @@
 #include "tokenizador.h"
 #include <fstream>
 #include <algorithm>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 using namespace std;
 
@@ -38,10 +41,21 @@ const short Tokenizador::MAPA_ACENTOS[256] =
 
 void Tokenizador::minusc_sin_acentos(string& foo)
 {
-    // for (string::iterator it = foo.begin(); it != foo.end(); ++it)
-    //     *it = Tokenizador::MAPA_ACENTOS[(int) *it];
     for (int i = 0; i < foo.length(); i++)
         foo[i] = Tokenizador::MAPA_ACENTOS[(unsigned char) foo[i]];
+}
+
+bool Tokenizador::is_dir(string& filename)
+{
+    struct stat buf;
+    stat(filename.c_str(), &buf);
+    return S_ISDIR(buf.st_mode);
+}
+
+bool Tokenizador::file_exists(string& filename)
+{
+    struct stat buffer;
+    return (stat(filename.c_str(), &buffer) == 0);
 }
 
 ostream& operator<<(ostream& os, const Tokenizador& tokenizador)
@@ -80,6 +94,11 @@ Tokenizador::Tokenizador()
     pasarAminuscSinAcentos = Tokenizador::PASAR_MINUSC_DEFAULT;
 }
 
+Tokenizador::~Tokenizador()
+{
+    this->delimiters = "";
+}
+
 Tokenizador::Tokenizador(const string& delimitadoresPalabra, const bool& kCasosEspeciales,
                          const bool& minuscSinAcentos)
 {
@@ -114,8 +133,6 @@ bool Tokenizador::is_delimiter(const char& foo) const
 {
     return (delimiters_set.find(foo) != delimiters_set.end());
 }
-
-
 
 void Tokenizador::Tokenizar(string& str, list<string>& tokens) const
 {
@@ -171,4 +188,39 @@ bool Tokenizador::Tokenizar(const string& input_filename, const string& output_f
         return false;
     }
     return true;
+}
+
+bool Tokenizador::Tokenizar(const string& i) const
+{
+    return Tokenizar(i, i + ".tk");
+}
+
+bool Tokenizador::TokenizarListaFicheros(const string& i) const
+{
+    ifstream ifs(i);
+    bool execution_is_right = true;
+    if (ifs.is_open())
+    {
+        string str;
+        while (ifs >> str)
+        {
+            if (!Tokenizador::file_exists(str))
+            {
+                cerr << "ERROR: El fichero " << str << " no existe" << endl;
+                execution_is_right = false;
+            }
+            else if (Tokenizador::is_dir(str))
+            {
+                cerr << "ERROR: El fichero " << str << " es un directorio" << endl;
+                execution_is_right = false;
+            }
+            execution_is_right = (execution_is_right && Tokenizar(str));
+        }
+    }
+    else
+    {
+        cerr << "ERROR: No existe el fichero " << i << endl;
+        execution_is_right = false;
+    }
+    return execution_is_right;
 }
