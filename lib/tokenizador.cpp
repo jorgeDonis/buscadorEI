@@ -38,8 +38,10 @@ const short Tokenizador::MAPA_ACENTOS[256] =
 
 void Tokenizador::minusc_sin_acentos(string& foo)
 {
-    for (string::iterator it = foo.begin(); it != foo.end(); ++it)
-        *it = Tokenizador::MAPA_ACENTOS[*it];
+    // for (string::iterator it = foo.begin(); it != foo.end(); ++it)
+    //     *it = Tokenizador::MAPA_ACENTOS[(int) *it];
+    for (int i = 0; i < foo.length(); i++)
+        foo[i] = Tokenizador::MAPA_ACENTOS[(unsigned char) foo[i]];
 }
 
 ostream& operator<<(ostream& os, const Tokenizador& tokenizador)
@@ -120,6 +122,7 @@ void Tokenizador::Tokenizar(string& str, list<string>& tokens) const
     //TODO: casos especiales
     //TODO: pasar a minusculas sin acentos
     if (pasarAminuscSinAcentos)
+        Tokenizador::minusc_sin_acentos(str);
     tokens.erase(tokens.begin(), tokens.end());
     string::iterator izquierda = str.begin();
     string::iterator derecha = str.begin();

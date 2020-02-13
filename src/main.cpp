@@ -14,13 +14,12 @@ int main()
     // for (list<string>::iterator it = tokens.begin(); it != tokens.end(); ++it)
     //     cout << *it << "|";
     // cout << "\b]" << endl;
-    int prueba[100] = {244, 244};
+    int prueba[100] = {232, 233, 225, 224, 250, 249};
     char prueba_char[100];
-    for (int i = 0; i < 2; i++)
+    for (int i = 0; i < 6; i++)
         prueba_char[i] = prueba[i];
     string foo(prueba_char);
+    cout << "string = " << foo << endl;
     Tokenizador::minusc_sin_acentos(foo);
     cout << "string = " << foo << endl;
-    for (int i = 0; i < 2; i++)
-        cout << "char[" << i << "] = " << foo[i] << endl;
 }
