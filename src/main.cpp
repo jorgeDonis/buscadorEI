@@ -14,6 +14,7 @@ int main()
     // string foo(prueba_char);
     // cout << "string = " << foo << endl;
     // list<string> tokens = list<string>();
+    tokenizador.PasarAminuscSinAcentos(true);
     bool execution_is_right = tokenizador.TokenizarDirectorio("corpus");
     if (execution_is_right)
         cout << "Execution is OK" << endl;  

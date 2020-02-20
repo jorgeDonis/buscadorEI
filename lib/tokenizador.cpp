@@ -103,8 +103,8 @@ Tokenizador::Tokenizador(const string& delimitadoresPalabra, const bool& kCasosE
                          const bool& minuscSinAcentos)
 {
     delimiters = delimitadoresPalabra;
-    delimiters_set.insert(delimiters.begin(), delimiters.end());
     remove_duplicate_string(delimiters);
+    delimiters_set.insert(delimiters.begin(), delimiters.end());
     casosEspeciales = kCasosEspeciales;
     pasarAminuscSinAcentos = minuscSinAcentos;
 }
@@ -112,6 +112,7 @@ Tokenizador::Tokenizador(const string& delimitadoresPalabra, const bool& kCasosE
 void Tokenizador::copy_values(const Tokenizador& tokenizador)
 {
     this->delimiters = tokenizador.delimiters;
+    delimiters_set.clear();
     delimiters_set.insert(delimiters.begin(), delimiters.end());
     this->pasarAminuscSinAcentos = tokenizador.pasarAminuscSinAcentos;
     this->casosEspeciales = tokenizador.casosEspeciales;
@@ -134,12 +135,44 @@ bool Tokenizador::is_delimiter(const char& foo) const
     return (delimiters_set.find(foo) != delimiters_set.end());
 }
 
-void Tokenizador::Tokenizar(string& str, list<string>& tokens) const
+void Tokenizador::DelimitadoresPalabra(const string& delimitadores)
+{
+    delimiters = delimitadores;
+    remove_duplicate_string(delimiters);
+    delimiters_set.clear();
+    delimiters_set.insert(delimiters.begin(), delimiters.end());
+}
+
+void Tokenizador::AnyadirDelimitadoresPalabra(const string& delimitadores_extra)
+{
+    for (char nuevo_delimitador : delimitadores_extra)
+    {
+        if (delimiters.find(nuevo_delimitador) == string::npos)
+            delimiters += nuevo_delimitador;
+    }
+    delimiters_set.clear();
+    delimiters_set.insert(delimiters.begin(), delimiters.end());
+}
+
+void Tokenizador::Tokenizar(string& str, list<string>& tokens)
 {
     //TODO: casos especiales
-    //TODO: pasar a minusculas sin acentos
     if (pasarAminuscSinAcentos)
         Tokenizador::minusc_sin_acentos(str);
+    if (casosEspeciales)
+    {
+        bool espacio_delimitador = delimiters.find(" ") != string::npos;
+        if (!espacio_delimitador)
+            AnyadirDelimitadoresPalabra(" ");
+        Tokenizar_especial(str, tokens);
+        if (!espacio_delimitador)
+        {
+            delimiters.erase(delimiters.find(" "));
+            delimiters_set.clear();
+            delimiters_set.insert(delimiters.begin(), delimiters.end());
+        }
+        return;
+    }
     tokens.erase(tokens.begin(), tokens.end());
     string::iterator izquierda = str.begin();
     string::iterator derecha = str.begin();
@@ -155,7 +188,7 @@ void Tokenizador::Tokenizar(string& str, list<string>& tokens) const
     }
 }
 
-bool Tokenizador::Tokenizar(const string& input_filename, const string& output_filename) const
+bool Tokenizador::Tokenizar(const string& input_filename, const string& output_filename)
 {
     //TODO: optimizar con https://gist.github.com/marcetcheverry/991042
     ifstream ifs(input_filename);
@@ -190,12 +223,12 @@ bool Tokenizador::Tokenizar(const string& input_filename, const string& output_f
     return true;
 }
 
-bool Tokenizador::Tokenizar(const string& i) const
+bool Tokenizador::Tokenizar(const string& i)
 {
     return Tokenizar(i, i + ".tk");
 }
 
-bool Tokenizador::TokenizarListaFicheros(const string& i) const
+bool Tokenizador::TokenizarListaFicheros(const string& i)
 {
     ifstream ifs(i);
     bool execution_is_right = true;
@@ -226,7 +259,7 @@ bool Tokenizador::TokenizarListaFicheros(const string& i) const
     return execution_is_right;
 }
 
-bool Tokenizador::TokenizarDirectorio(const string& i) const
+bool Tokenizador::TokenizarDirectorio(const string& i)
 {
     //TODO fallo porque me coje el directorio raiz tambien como si fuera un fichero
     bool execution_is_right = true;
@@ -242,10 +275,39 @@ bool Tokenizador::TokenizarDirectorio(const string& i) const
     }
     else
     {
-        string cmd = "find " + i + " -follow |sort > " + Tokenizador::DEFAULT_FILELIST_FILENAME;
+        string cmd = "find " + i + " -type f > " + Tokenizador::DEFAULT_FILELIST_FILENAME;
         system(cmd.c_str());
         execution_is_right = (execution_is_right && 
                             TokenizarListaFicheros(Tokenizador::DEFAULT_FILELIST_FILENAME));
     }
     return execution_is_right;
+}
+
+void Tokenizador::Tokenizar_especial(std::string& str, std::list<std::string>& tokens)
+{
+    for (string::iterator it = str.begin(); it != str.end(); ++it)
+    {
+        
+    }
+}
+
+bool Tokenizador::es_URL(const string& token) const
+{
+    if (token[token.length - 1] == ':')
+    {
+        return (token.find("http:") != string::npos || token.find("https:") != string::npos
+                || token.find("ftp:") != string::npos);
+    }
+    return false;
+}
+
+
+static void siguiente(const Estado &estado_antiguo, std::string &token)
+{
+    switch (estado_antiguo.estado)
+    {
+    case 1:
+        if (es_URL(token))
+            break;
+    }
 }
