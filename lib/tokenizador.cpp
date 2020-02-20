@@ -38,6 +38,9 @@ const short Tokenizador::MAPA_ACENTOS[256] =
     245, 246, 247, 248, 117, 117, 251, 252, 253, 254, 
     255, 
 };
+string Estado::full_string;
+string::iterator Estado::absolute_iterator;
+Tokenizador Estado::tokenizador;
 
 void Tokenizador::minusc_sin_acentos(string& foo)
 {
@@ -283,31 +286,94 @@ bool Tokenizador::TokenizarDirectorio(const string& i)
     return execution_is_right;
 }
 
+
 void Tokenizador::Tokenizar_especial(std::string& str, std::list<std::string>& tokens)
 {
+    Estado::tokenizador = *this;
+    Estado::full_string = str;
+    string token;
+    Estado estado;
     for (string::iterator it = str.begin(); it != str.end(); ++it)
     {
-        
+        Estado::absolute_iterator = it;
+        token += *it;
+        estado.siguiente(token);
+        if (estado.estado == 1 && is_delimiter(token[token.length()]))
+        {
+            token.erase(token.end() - 1);
+            if (token.length() > 1)
+                tokens.push_back(token);
+            token.erase(token.begin(), token.end());
+        }
     }
 }
 
-bool Tokenizador::es_URL(const string& token) const
+bool Estado::es_URL(const string& token) const
 {
-    if (token[token.length - 1] == ':')
+    if (token[token.length() - 1] == ':')
+        return (!token.find("http:") || !token.find("https:") || !token.find("ftp:"));
+    return false;
+}
+
+bool Estado::es_decimal(const unsigned char c) const
+{
+    return (c >= 48 && c <= 57);
+}
+
+bool Estado::char_not_surround(const char& c) const
+{
+    if (*Estado::absolute_iterator == c)
     {
-        return (token.find("http:") != string::npos || token.find("https:") != string::npos
-                || token.find("ftp:") != string::npos);
+        if ((Estado::absolute_iterator == Estado::full_string.end() - 2 ||
+             !Estado::tokenizador.is_delimiter((unsigned char)*next(Estado::absolute_iterator, 1))) &&
+            (Estado::absolute_iterator == Estado::full_string.begin() ||
+             !Estado::tokenizador.is_delimiter((unsigned char)*prev(Estado::absolute_iterator, 1))))
+                return true;
     }
     return false;
 }
 
-
-static void siguiente(const Estado &estado_antiguo, std::string &token)
+bool Estado::es_decimal(const string& token) const
 {
-    switch (estado_antiguo.estado)
+    if (token[token.length() - 1] == '.' || token[token.length() - 1] == ',')
+    {
+        if ((Estado::absolute_iterator == Estado::full_string.end() - 2 ||
+             es_decimal((unsigned char)*next(Estado::absolute_iterator, 1))) &&
+            (Estado::absolute_iterator == Estado::full_string.begin() ||
+             es_decimal((unsigned char)*prev(Estado::absolute_iterator, 1))))
+             {
+                for (int i = 0; i < token.length(); i++)
+                    if (!es_decimal((unsigned char) token[i]))
+                        return false;
+                return true;
+             }
+    }
+    return false;
+}
+
+bool Estado::es_email() const
+{
+    return char_not_surround('@');
+}
+
+void Estado::siguiente(std::string& token)
+{
+    switch (estado)
     {
     case 1:
         if (es_URL(token))
-            break;
+            estado = 2;
+        else if (es_decimal(token))
+        {
+            estado = 3;
+            if (Estado::absolute_iterator == Estado::full_string.begin() ||
+                Estado::tokenizador.is_delimiter(*prev(Estado::absolute_iterator, 1)))
+                    token.insert(0, "0.");
+        }
+        else if (es_email())
+        {
+
+        }
+        break;
     }
 }
