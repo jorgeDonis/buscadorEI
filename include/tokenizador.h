@@ -62,6 +62,7 @@ class Tokenizador
 class Estado
 {
     private:
+        static const std::string URL_ALLOWED_DELI;
         bool char_not_surround(const char &) const;
         bool es_URL(const std::string&) const;
         bool es_decimal(const unsigned char) const;
@@ -73,10 +74,13 @@ class Estado
         static Tokenizador tokenizador;
         static std::string full_string;
         static std::string::iterator absolute_iterator;
+        static std::list<std::string> tokens;
         short estado;
         Estado() {estado = 1;}
         Estado(int estado) {this->estado = estado;}
         void siguiente(std::string&);
+        void siguiente_default(std::string&);
+        void siguiente_decimal(std::string&);
 
 };
 
