@@ -321,8 +321,11 @@ void Tokenizador::Tokenizar_especial(std::string& str, std::list<std::string>& t
 
 bool Estado::es_URL(const string& token) const
 {
-    if (token[token.length() - 1] == ':')
-        return (!token.find("http:") || !token.find("https:") || !token.find("ftp:"));
+    if (Estado::URL_ALLOWED_DELI.find(*Estado::absolute_iterator) != string::npos)
+    {
+        if (token[token.length() - 1] == ':')
+            return (!token.find("http:") || !token.find("https:") || !token.find("ftp:"));
+    }
     return false;
 }
 
@@ -363,9 +366,26 @@ bool Estado::es_decimal(const string& token) const
     return false;
 }
 
-bool Estado::es_email() const
+bool Estado::es_email(const string& token) const
 {
-    return char_not_surround('@') && Estado::tokenizador.is_delimiter('@');
+    if (char_not_surround('@') && Estado::tokenizador.is_delimiter('@'))
+    {
+        if (token.find('@') == token.length() - 1)
+        {
+            for (string::iterator it = Estado::absolute_iterator + 1; 
+                *it == '.' || *it == '_' || *it == '-' || *it == '@' || !Estado::tokenizador.is_delimiter(*it);
+                ++it)
+            {
+                if (*it == '@')
+                    return false;
+            }
+        }
+        else
+            return false;
+    }
+    else
+        return false;
+    return true;
 }
 
 bool Estado::es_acronimo() const
@@ -389,7 +409,7 @@ void Estado::siguiente_default(string& token)
             Estado::tokenizador.is_delimiter(*prev(Estado::absolute_iterator, 1)))
             token.insert(0, "0.");
     }
-    else if (es_email())
+    else if (es_email(token))
         estado = 4;
     else if (es_acronimo())
         estado = 5;

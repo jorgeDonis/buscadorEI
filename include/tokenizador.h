@@ -67,7 +67,7 @@ class Estado
         bool es_URL(const std::string&) const;
         bool es_decimal(const unsigned char) const;
         bool es_decimal(const std::string&) const;
-        bool es_email() const;
+        bool es_email(const std::string&) const;
         bool es_acronimo() const;
         bool es_multipalabra() const;
     public:
