@@ -4,12 +4,14 @@
 
 using namespace std;
 
+
+
 int main()
 {
-    Tokenizador tokenizador("@.-_", true,false);
+    Tokenizador tokenizador("@.,&", true,false);
 
     list<string> tokens;
-    string corpus = "-UA@iuii.ua.es @p1 p2 ";
+    string corpus = "3.4%";
     tokenizador.Tokenizar(corpus, tokens);
     cout << "[";
     for (list<string>::iterator it = tokens.begin(); it != tokens.end(); ++it)

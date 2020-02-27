@@ -58,6 +58,8 @@ class Tokenizador
         bool TokenizarDirectorio(const std::string&);
 };
 
+enum Estados {_default, URL, decimal, email, acronimo, multipalabra, pctg, dollar};
+
 //Representa el estado dentro de la máquina de estados finitos
 class Estado
 {
@@ -72,12 +74,11 @@ class Estado
         bool es_multipalabra() const;
     public:
         static Tokenizador tokenizador;
-        static std::string full_string;
+        std::string& full_string;
         static std::string::iterator absolute_iterator;
         static std::list<std::string> tokens;
-        short estado;
-        Estado() {estado = 1;}
-        Estado(int estado) {this->estado = estado;}
+        Estados estado;
+        Estado(std::string& str) : estado(_default), full_string(str){;}
         void siguiente(std::string&);
         void siguiente_default(std::string&);
         void siguiente_decimal(std::string&);
