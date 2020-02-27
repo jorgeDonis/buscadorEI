@@ -40,7 +40,6 @@ const short Tokenizador::MAPA_ACENTOS[256] =
 };
 string::iterator Estado::absolute_iterator;
 Tokenizador Estado::tokenizador;
-list<string> Estado::tokens;
 const string Estado::URL_ALLOWED_DELI = "_:/.?&-=#@";
 
 void Tokenizador::minusc_sin_acentos(string& foo)
@@ -290,15 +289,14 @@ bool Tokenizador::TokenizarDirectorio(const string& i)
 
 void Tokenizador::Tokenizar_especial(std::string& str, std::list<std::string>& tokens)
 {
-    Estado::tokens = tokens;
     Estado::tokenizador = *this;
     string token;
-    Estado estado(str);
+    Estado estado(str, tokens);
     for (string::iterator it = str.begin(); it != str.end(); ++it)
     {
         Estado::absolute_iterator = it;
         token += *it;
-        if (it == str.end() - 1)
+        if (it == str.end() - 1 && *it != '%' && *it != '$')
         {
             if (is_delimiter(*it))
                 token.erase(token.end() - 1);
@@ -354,11 +352,21 @@ bool Estado::es_decimal(const string& token) const
              es_decimal((unsigned char)*next(Estado::absolute_iterator, 1))) &&
             (Estado::absolute_iterator == full_string.begin() ||
              es_decimal((unsigned char)*prev(Estado::absolute_iterator, 1)))
-             || Estado::tokenizador.is_delimiter(*prev(Estado::absolute_iterator, 1)))
+             || (Estado::tokenizador.is_delimiter(*prev(Estado::absolute_iterator, 1)))
+             && es_decimal((unsigned char)*next(Estado::absolute_iterator, 1)))
              {
                 for (int i = 0; i < token.length() - 1; i++)
                     if (!es_decimal((unsigned char) token[i]))
                         return false;
+                string::iterator it = Estado::absolute_iterator;
+                while (it != Estado::full_string.end() - 1 &&
+                       (!Estado::tokenizador.is_delimiter(*it) || *it == ','
+                       || *it == '.'))
+                {
+                    if (!es_decimal((unsigned char)*it) && *it != '.' && *it != ',')
+                        return false;
+                    it++;
+                }
                 return true;
              }
     }
@@ -421,19 +429,16 @@ void Estado::siguiente_default(string& token)
         estado = acronimo;
     else if (es_multipalabra())
         estado = multipalabra;
+    else
+        estado = _default;
 }
 
 void Estado::siguiente_decimal(string& token)
 {
-    if (!Estado::tokenizador.is_delimiter(*Estado::absolute_iterator) || 
-       char_not_surround('.') || char_not_surround(','))
-        estado = decimal;
-    else if (!Estado::tokenizador.is_delimiter(*Estado::absolute_iterator) &&
-             !es_decimal((unsigned char)*Estado::absolute_iterator))
-        estado = acronimo;
-    else if (*Estado::absolute_iterator == '%')
+    if (*Estado::absolute_iterator == '%')
     {
         estado = pctg;
+        token.erase(token.end() - 1, token.end());
         tokens.push_back(token);
         token.erase(token.begin(), token.end());
         tokens.push_back("%");
@@ -442,11 +447,18 @@ void Estado::siguiente_decimal(string& token)
     else if (*Estado::absolute_iterator == '$')
     {
         estado = dollar;
+        token.erase(token.end() - 1, token.end());
         tokens.push_back(token);
         token.erase(token.begin(), token.end());
         tokens.push_back("$");
         Estado::absolute_iterator++;
     }
+    else if (!Estado::tokenizador.is_delimiter(*Estado::absolute_iterator) || 
+       char_not_surround('.') || char_not_surround(','))
+        estado = decimal;
+    else if (!Estado::tokenizador.is_delimiter(*Estado::absolute_iterator) &&
+             !es_decimal((unsigned char)*Estado::absolute_iterator))
+        estado = acronimo;
     else
         estado = _default;
 }

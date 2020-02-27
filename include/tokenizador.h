@@ -76,9 +76,9 @@ class Estado
         static Tokenizador tokenizador;
         std::string& full_string;
         static std::string::iterator absolute_iterator;
-        static std::list<std::string> tokens;
+        std::list<std::string>& tokens;
         Estados estado;
-        Estado(std::string& str) : estado(_default), full_string(str){;}
+        Estado(std::string &str, std::list<std::string>& tk) : estado(_default), full_string(str), tokens(tk) { ; }
         void siguiente(std::string&);
         void siguiente_default(std::string&);
         void siguiente_decimal(std::string&);
