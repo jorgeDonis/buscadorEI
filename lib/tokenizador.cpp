@@ -29,16 +29,16 @@ const short Tokenizador::MAPA_ACENTOS[256] =
     155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 
     165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 
     175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 
-    185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 
-    195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 
-    205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 
-    215, 216, 217, 218, 219, 220, 221, 222, 223, 97, 
+    185, 186, 187, 188, 189, 190, 191, 97, 97, 194, 
+    195, 196, 197, 198, 199, 101, 101, 202, 203, 105, 
+    105, 206, 207, 208, 241, 111, 111, 212, 213, 214, 
+    215, 216, 117, 117, 219, 220, 221, 222, 223, 97, 
     97, 226, 227, 228, 229, 230, 231, 101, 101, 234, 
     235, 105, 105, 238, 239, 240, 241, 111, 111, 244, 
     245, 246, 247, 248, 117, 117, 251, 252, 253, 254, 
     255, 
 };
-string::iterator Estado::absolute_iterator;
+string::const_iterator Estado::absolute_iterator;
 Tokenizador Estado::tokenizador;
 const string Estado::URL_ALLOWED_DELI = "_:/.?&-=#@";
 
@@ -157,11 +157,9 @@ void Tokenizador::AnyadirDelimitadoresPalabra(const string& delimitadores_extra)
     delimiters_set.insert(delimiters.begin(), delimiters.end());
 }
 
-void Tokenizador::Tokenizar(string& str, list<string>& tokens)
+void Tokenizador::Tokenizar(const string& str, list<string>& tokens)
 {
-    //TODO: casos especiales
-    if (pasarAminuscSinAcentos)
-        Tokenizador::minusc_sin_acentos(str);
+    tokens.erase(tokens.begin(), tokens.end());
     if (casosEspeciales)
     {
         bool espacio_delimitador = delimiters.find(" ") != string::npos;
@@ -174,21 +172,25 @@ void Tokenizador::Tokenizar(string& str, list<string>& tokens)
             delimiters_set.clear();
             delimiters_set.insert(delimiters.begin(), delimiters.end());
         }
-        return;
     }
-    tokens.erase(tokens.begin(), tokens.end());
-    string::iterator izquierda = str.begin();
-    string::iterator derecha = str.begin();
-    while (derecha != str.end())
+    else
     {
-        while (izquierda != str.end() && is_delimiter(*izquierda))
-            izquierda++;
-        derecha = izquierda;
-        while (derecha != str.end() && !is_delimiter(*derecha))
-            derecha++;
-        tokens.push_back(string(izquierda, derecha));
-        izquierda = derecha + 1;
+        string::const_iterator izquierda = str.begin();
+        string::const_iterator derecha = str.begin();
+        while (derecha != str.end())
+        {
+            while (izquierda != str.end() && is_delimiter(*izquierda))
+                izquierda++;
+            derecha = izquierda;
+            while (derecha != str.end() && !is_delimiter(*derecha))
+                derecha++;
+            tokens.push_back(string(izquierda, derecha));
+            izquierda = derecha + 1;
+        }
     }
+    if (pasarAminuscSinAcentos)
+        for (string& token : tokens)
+            minusc_sin_acentos(token);
 }
 
 bool Tokenizador::Tokenizar(const string& input_filename, const string& output_filename)
@@ -287,20 +289,20 @@ bool Tokenizador::TokenizarDirectorio(const string& i)
 }
 
 
-void Tokenizador::Tokenizar_especial(std::string& str, std::list<std::string>& tokens)
+void Tokenizador::Tokenizar_especial(const std::string& str, std::list<std::string>& tokens)
 {
     Estado::tokenizador = *this;
     string token;
     Estado estado(str, tokens);
-    for (string::iterator it = str.begin(); it != str.end(); ++it)
+    for (string::const_iterator it = str.begin(); it != str.end(); ++it)
     {
         Estado::absolute_iterator = it;
         token += *it;
         if (it == str.end() - 1 && *it != '%' && *it != '$')
         {
-            if (is_delimiter(*it))
+            if (is_delimiter(*it) && estado.estado != URL)
                 token.erase(token.end() - 1);
-            if (token.length() > 1)
+            if (token.length() >= 1)
                 tokens.push_back(token);
             return;
         }
@@ -334,7 +336,7 @@ bool Estado::char_not_surround(const char& c) const
 {
     if (*Estado::absolute_iterator == c)
     {
-        if ((Estado::absolute_iterator == full_string.end() - 2 ||
+        if ((Estado::absolute_iterator == full_string.end() - 1 ||
              !Estado::tokenizador.is_delimiter((unsigned char)*next(Estado::absolute_iterator, 1))) &&
             (Estado::absolute_iterator == full_string.begin() ||
              !Estado::tokenizador.is_delimiter((unsigned char)*prev(Estado::absolute_iterator, 1))))
@@ -345,30 +347,37 @@ bool Estado::char_not_surround(const char& c) const
 
 bool Estado::es_decimal(const string& token) const
 {
-    if ((token[token.length() - 1] == '.' && Estado::tokenizador.is_delimiter('.'))
-        || (token[token.length() - 1] == ',') && Estado::tokenizador.is_delimiter(','))
+    if (Estado::tokenizador.is_delimiter('.') && Estado::tokenizador.is_delimiter(',')
+        && (((token[token.length() - 1] == '.' || token[token.length() - 1] == ',')
+            && !Estado::tokenizador.is_delimiter(*next(Estado::absolute_iterator, 1)))
+            || token[token.length() - 1] == '%' || token[token.length() - 1] == '$'))
     {
-        if ((Estado::absolute_iterator < full_string.end() - 1 &&
-             es_decimal((unsigned char)*next(Estado::absolute_iterator, 1))) &&
-            (Estado::absolute_iterator == full_string.begin() ||
-             es_decimal((unsigned char)*prev(Estado::absolute_iterator, 1)))
-             || (Estado::tokenizador.is_delimiter(*prev(Estado::absolute_iterator, 1)))
-             && es_decimal((unsigned char)*next(Estado::absolute_iterator, 1)))
-             {
+        // if ((Estado::absolute_iterator < full_string.end() - 1 &&
+        //      es_decimal((unsigned char)*next(Estado::absolute_iterator, 1))) &&
+        //     (Estado::absolute_iterator == full_string.begin() ||
+        //      es_decimal((unsigned char)*prev(Estado::absolute_iterator, 1)))
+        //      || (Estado::tokenizador.is_delimiter(*prev(Estado::absolute_iterator, 1)))
+        //      && es_decimal((unsigned char)*next(Estado::absolute_iterator, 1)))
+        //      {
                 for (int i = 0; i < token.length() - 1; i++)
-                    if (!es_decimal((unsigned char) token[i]))
+                    if (!es_decimal((unsigned char) token[i]) && token[i] != '.'
+                        && token[i] != ',')
                         return false;
-                string::iterator it = Estado::absolute_iterator;
+                string::const_iterator it = Estado::absolute_iterator;
                 while (it != Estado::full_string.end() - 1 &&
                        (!Estado::tokenizador.is_delimiter(*it) || *it == ','
                        || *it == '.'))
                 {
                     if (!es_decimal((unsigned char)*it) && *it != '.' && *it != ',')
-                        return false;
+                    {
+                        if (!(*it == '$' || *it == '%') || !(it == Estado::full_string.end() - 1
+                         || Estado::tokenizador.is_delimiter(*(next(it, 1)))))
+                            return false;
+                    }
                     it++;
                 }
                 return true;
-             }
+            //  }
     }
     return false;
 }
@@ -381,8 +390,9 @@ bool Estado::es_email(const string& token) const
     {
         if (token.find('@') == token.length() - 1)
         {
-            for (string::iterator it = Estado::absolute_iterator + 1; 
-                *it == '.' || *it == '_' || *it == '-' || *it == '@' || !Estado::tokenizador.is_delimiter(*it);
+            for (string::const_iterator it = Estado::absolute_iterator + 1; 
+                (*it == '.' || *it == '_' || *it == '-' || *it == '@' || !Estado::tokenizador.is_delimiter(*it))
+                && it != Estado::full_string.end();
                 ++it)
             {
                 if (*it == '@')
@@ -418,7 +428,10 @@ void Estado::siguiente_default(string& token)
         estado = URL;
     else if (es_decimal(token))
     {
-        estado = decimal;
+        if (*Estado::absolute_iterator == '%' || *Estado::absolute_iterator == '$')
+            siguiente_decimal(token);
+        else
+            estado = decimal;
         if (Estado::absolute_iterator == full_string.begin() ||
             Estado::tokenizador.is_delimiter(*prev(Estado::absolute_iterator, 1)))
             token.insert(0, "0");

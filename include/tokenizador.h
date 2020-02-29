@@ -25,7 +25,7 @@ class Tokenizador
         bool pasarAminuscSinAcentos;
         void copy_values(const Tokenizador&);
         //para cuando casosEspeciales == true
-        void Tokenizar_especial(std::string &, std::list<std::string> &);
+        void Tokenizar_especial(const std::string&, std::list<std::string>&);
     public:
         Tokenizador();
         ~Tokenizador();
@@ -51,7 +51,7 @@ class Tokenizador
         {
             return pasarAminuscSinAcentos;
         }
-        void Tokenizar(std::string&, std::list<std::string>&);
+        void Tokenizar(const std::string&, std::list<std::string>&);
         bool Tokenizar(const std::string&, const std::string&);
         bool Tokenizar(const std::string&);
         bool TokenizarListaFicheros(const std::string&);
@@ -74,11 +74,11 @@ class Estado
         bool es_multipalabra() const;
     public:
         static Tokenizador tokenizador;
-        std::string& full_string;
-        static std::string::iterator absolute_iterator;
+        const std::string& full_string;
+        static std::string::const_iterator absolute_iterator;
         std::list<std::string>& tokens;
         Estados estado;
-        Estado(std::string &str, std::list<std::string>& tk) : estado(_default), full_string(str), tokens(tk) { ; }
+        Estado(const std::string &str, std::list<std::string>& tk) : estado(_default), full_string(str), tokens(tk) { ; }
         void siguiente(std::string&);
         void siguiente_default(std::string&);
         void siguiente_decimal(std::string&);

@@ -1,20 +1,25 @@
-#include  "tokenizador.h"
-#include <iostream>
-#include <math.h>
+#include <iostream> 
+#include <string>
+#include <list> 
+#include "tokenizador.h"
 
 using namespace std;
 
-
-
-int main()
+void
+print_tokens(const list<string>& tokens)
 {
-    Tokenizador tokenizador("", true,false);
+        cout << "[";
+        for (const string& token : tokens)
+                cout << token << "|";
+        cout << "\b]" << endl;
+}
 
-    list<string> tokens;
-    string corpus = "3..2 4,,,,5 ..35";
-    tokenizador.Tokenizar(corpus, tokens);
-    cout << "[";
-    for (list<string>::iterator it = tokens.begin(); it != tokens.end(); ++it)
-        cout << *it << "|";
-    cout << "\b]" << endl;
+int
+main()
+{
+        Tokenizador tokenizador;
+        tokenizador.CasosEspeciales(true);
+        tokenizador.PasarAminuscSinAcentos(true);
+        tokenizador.TokenizarDirectorio("/home/jorge/Desktop/EI/practica/Tokenizador/corpus");
+        return 0;
 }
