@@ -8,3 +8,6 @@ Se compone de:
 * **Tokenizador**: Separa una cadena en distintas palabras o unidades mínimas de información (URL's, multipalabras...).
 * **Indexador**: Construye un índice con el corpus que almacena el número de ocurrencias de cada token en cada documento.
 * **Buscador**: Encuentra el resultado más relevante basándose en el índice previamente construido.
+
+## Autómata del tokenizador
+![tokenizador](https://raw.githubusercontent.com/jorgeDonis/buscadorEI/master/diagrama_tokenizador.png?token=ALLEA2TVUTGQ2ILMM7VBFAS6MEOEO "Autómata tokenizador")
