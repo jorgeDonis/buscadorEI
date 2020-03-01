@@ -226,18 +226,8 @@ bool Tokenizador::EscribirFichero(const string& output_filename, const list<stri
     size_t textsize = 1;
     for (const string& token : tokens)
         textsize += token.length() + 1;
-    if (lseek(fd, textsize - 1, SEEK_SET) == -1)
-    {
-        close(fd);
-        perror("Error calling lseek() to 'stretch' the file");
-        return false;
-    }
-    if (write(fd, "", 1) == -1)
-    {
-        close(fd);
-        perror("Error writing last byte of the file");
-        return false;
-    }
+    lseek(fd, textsize - 1, SEEK_SET);
+    write(fd, "", 1);
     char* map = (char*) mmap(0, textsize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     unsigned i = 0;
     for (const string& token : tokens)
