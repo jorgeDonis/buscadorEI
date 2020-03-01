@@ -19,8 +19,8 @@ class Tokenizador
         static bool file_exists(const std::string&);
         static void minusc_sin_acentos(std::string&);
         std::string delimiters;
-        //Contiene todos los delimitadores en una tabla hash        
-        std::unordered_set<char> delimiters_set;
+        //delimiters_set[i] = 1 si el caracter i es delimitador. De lo contrario, 0.        
+        short delimiters_set[256] = {0};
         bool casosEspeciales;
         bool pasarAminuscSinAcentos;
         void copy_values(const Tokenizador&);

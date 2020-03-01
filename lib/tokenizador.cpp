@@ -92,7 +92,8 @@ void remove_duplicate_string(string& str)
 Tokenizador::Tokenizador()
 {
     delimiters = Tokenizador::DEFAULT_DELIMITERS;
-    delimiters_set.insert(delimiters.begin(), delimiters.end());
+    for (const char& c : delimiters)
+        delimiters_set[(unsigned char) c] = 1;
     casosEspeciales = Tokenizador::CASOS_ESPECIALES_DEFAULT;
     pasarAminuscSinAcentos = Tokenizador::PASAR_MINUSC_DEFAULT;
 }
@@ -107,7 +108,8 @@ Tokenizador::Tokenizador(const string& delimitadoresPalabra, const bool& kCasosE
 {
     delimiters = delimitadoresPalabra;
     remove_duplicate_string(delimiters);
-    delimiters_set.insert(delimiters.begin(), delimiters.end());
+    for (const char &c : delimiters)
+        delimiters_set[(unsigned char) c] = 1;
     casosEspeciales = kCasosEspeciales;
     pasarAminuscSinAcentos = minuscSinAcentos;
 }
@@ -115,8 +117,8 @@ Tokenizador::Tokenizador(const string& delimitadoresPalabra, const bool& kCasosE
 void Tokenizador::copy_values(const Tokenizador& tokenizador)
 {
     this->delimiters = tokenizador.delimiters;
-    delimiters_set.clear();
-    delimiters_set.insert(delimiters.begin(), delimiters.end());
+    for (unsigned i = 0; i < 256; i++)
+        delimiters_set[i] = tokenizador.delimiters_set[i];
     this->pasarAminuscSinAcentos = tokenizador.pasarAminuscSinAcentos;
     this->casosEspeciales = tokenizador.casosEspeciales;
 }
@@ -135,15 +137,17 @@ Tokenizador& Tokenizador::operator=(const Tokenizador& tokenizador)
 
 bool Tokenizador::is_delimiter(const char& foo) const
 {
-    return (delimiters_set.find(foo) != delimiters_set.end());
+    return delimiters_set[(unsigned char) foo];
 }
 
 void Tokenizador::DelimitadoresPalabra(const string& delimitadores)
 {
     delimiters = delimitadores;
     remove_duplicate_string(delimiters);
-    delimiters_set.clear();
-    delimiters_set.insert(delimiters.begin(), delimiters.end());
+    for (int i = 0; i < 256; i++)
+        delimiters_set[i] = 0;
+    for (const char &c : delimiters)
+        delimiters_set[(unsigned char) c] = 1;
 }
 
 void Tokenizador::AnyadirDelimitadoresPalabra(const string& delimitadores_extra)
@@ -151,10 +155,11 @@ void Tokenizador::AnyadirDelimitadoresPalabra(const string& delimitadores_extra)
     for (char nuevo_delimitador : delimitadores_extra)
     {
         if (delimiters.find(nuevo_delimitador) == string::npos)
+        {
             delimiters += nuevo_delimitador;
+            delimiters_set[(unsigned char) nuevo_delimitador] = 1;
+        }
     }
-    delimiters_set.clear();
-    delimiters_set.insert(delimiters.begin(), delimiters.end());
 }
 
 void Tokenizador::Tokenizar(const string& str, list<string>& tokens)
@@ -169,8 +174,7 @@ void Tokenizador::Tokenizar(const string& str, list<string>& tokens)
         if (!espacio_delimitador)
         {
             delimiters.erase(delimiters.find(" "));
-            delimiters_set.clear();
-            delimiters_set.insert(delimiters.begin(), delimiters.end());
+            delimiters_set[32] = 0;
         }
     }
     else
