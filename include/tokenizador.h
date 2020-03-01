@@ -61,11 +61,13 @@ class Tokenizador
 };
 
 enum Estados {_default, URL, decimal, email, acronimo, multipalabra, pctg, dollar};
+enum EspecialesActivos {URL_ac, decimal_ac, email_ac, acronimo_ac, multipalabra_ac};
 
 //Representa el estado dentro de la máquina de estados finitos
 class Estado
 {
     private:
+        static const short DEFAULT_CHARS[256];
         static const std::string URL_ALLOWED_DELI;
         bool char_not_surround(const char &) const;
         bool es_URL(const std::string&) const;
@@ -74,13 +76,17 @@ class Estado
         bool es_email(const std::string&) const;
         bool es_acronimo() const;
         bool es_multipalabra() const;
+        bool casos_activos[5] = { false };
     public:
+        void set_casos_activos();
         static Tokenizador tokenizador;
         const std::string& full_string;
         static std::string::const_iterator absolute_iterator;
         std::list<std::string>& tokens;
         Estados estado;
-        Estado(const std::string &str, std::list<std::string>& tk) : estado(_default), full_string(str), tokens(tk) { ; }
+        Estado(const std::string &str, std::list<std::string>& tk) : estado(_default), full_string(str), tokens(tk){
+            set_casos_activos();
+        }
         void siguiente(std::string&);
         void siguiente_default(std::string&);
         void siguiente_decimal(std::string&);

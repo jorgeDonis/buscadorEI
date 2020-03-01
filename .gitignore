@@ -1,2 +1,4 @@
 *.o
 *.code-workspace
+perf.data
+perf.data.old
