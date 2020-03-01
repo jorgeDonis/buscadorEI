@@ -11,3 +11,6 @@ Se compone de:
 
 ## Autómata del tokenizador
 ![tokenizador](https://raw.githubusercontent.com/jorgeDonis/buscadorEI/master/diagrama_tokenizador.png?token=ALLEA2TVUTGQ2ILMM7VBFAS6MEOEO "Autómata tokenizador")
+
+### Mapeado de memoria
+[Gist](https://gist.github.com/marcetcheverry/991042)
