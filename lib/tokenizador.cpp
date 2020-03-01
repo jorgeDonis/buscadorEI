@@ -3,6 +3,12 @@
 #include <algorithm>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <unistd.h>
 
 using namespace std;
 
@@ -197,36 +203,75 @@ void Tokenizador::Tokenizar(const string& str, list<string>& tokens)
             minusc_sin_acentos(token);
 }
 
+bool Tokenizador::TokenizarFichero(const string& filename, list<string>& tokens)
+{
+    int fd = open(filename.c_str(), O_RDONLY, (mode_t)0600);
+    if (fd == -1)
+        return false;
+    struct stat fileInfo = {0};
+    fstat(fd, &fileInfo);
+    char* map = (char*) mmap(0, fileInfo.st_size, PROT_READ, MAP_SHARED, fd, 0);
+    string full_str(map);
+    munmap(map, fileInfo.st_size);
+    close(fd);
+    Tokenizar(full_str, tokens);
+    return true;
+}
+
+bool Tokenizador::EscribirFichero(const string& output_filename, const list<string>& tokens) const
+{
+    int fd = open(output_filename.c_str(), O_RDWR | O_CREAT | O_TRUNC, (mode_t)0600);
+    if (fd == -1)
+        return false;
+    size_t textsize = 1;
+    for (const string& token : tokens)
+        textsize += token.length() + 1;
+    if (lseek(fd, textsize - 1, SEEK_SET) == -1)
+    {
+        close(fd);
+        perror("Error calling lseek() to 'stretch' the file");
+        return false;
+    }
+    if (write(fd, "", 1) == -1)
+    {
+        close(fd);
+        perror("Error writing last byte of the file");
+        return false;
+    }
+    char* map = (char*) mmap(0, textsize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    unsigned i = 0;
+    for (const string& token : tokens)
+    {
+        for (unsigned j = 0; j < token.length(); j++)
+        {
+            map[i] = token[j];
+            i++;
+        }
+        map[i] = '\n';
+        i++;
+    }
+    if (msync(map, textsize, MS_SYNC) == -1)
+        perror("Could not sync the file to disk");
+    munmap(map, textsize);
+    close(fd);
+    return true;
+}
+
 bool Tokenizador::Tokenizar(const string& input_filename, const string& output_filename)
 {
     //TODO: optimizar con https://gist.github.com/marcetcheverry/991042
-    ifstream ifs(input_filename);
     list<string> tokens;
-    if (ifs.is_open())
+    if (TokenizarFichero(input_filename, tokens))
     {
-        string str;
-        ifs.seekg(0, ios::end);
-        str.reserve(ifs.tellg());
-        ifs.seekg(0, ios::beg);
-        str.assign(istreambuf_iterator<char>(ifs), istreambuf_iterator<char>());
-        Tokenizar(str, tokens);
-        ifs.close();
+        if (!EscribirFichero(output_filename, tokens))
+        {
+            cerr << "ERROR: Error al crear el fichero: " << output_filename << endl;
+            return false;
+        }
     }
     else
     {
         cerr << "ERROR: No existe el archivo: " << input_filename << endl;
-        return false;
-    }
-    ofstream ofs(output_filename);
-    if (ofs.is_open())
-    {
-        for (string token : tokens)
-            ofs << token << endl;
-        ofs.close();
-    }
-    else
-    {
-        cerr << "ERROR: Error al crear el fichero: " << output_filename << endl;
         return false;
     }
     return true;

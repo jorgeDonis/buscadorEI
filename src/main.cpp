@@ -5,36 +5,21 @@
 
 using namespace std;
 
-///////// Comprobación de que vacíe la lista resultado
-
-void imprimirListaSTL(const list<string>& cadena)
+void
+print_tokens(const list<string>& tokens)
 {
-        list<string>::const_iterator itCadena;
-        for(itCadena=cadena.begin();itCadena!=cadena.end();itCadena++)
-        {
-                cout << (*itCadena) << ", ";
-        }
-        cout << endl;
+        cout << "[";
+        for (const string& token : tokens)
+                cout << token << "|";
+        cout << "\b]" << endl;
 }
 
 int
-main(void)
+main()
 {
-	bool kCasosEspeciales = true, kpasarAminusculas = false;
-
-	list<string> lt1, lt2;
-
-Tokenizador a("", true, false); 
-list<string> tokens; 
-
-a.Tokenizar("http:", tokens);
-	imprimirListaSTL(tokens);
-
-a.Tokenizar("http:////ab/", tokens);
-	imprimirListaSTL(tokens);
-
-a.Tokenizar("http:////ab.", tokens);
-	imprimirListaSTL(tokens);
-
-
+        Tokenizador tokenizador;
+        tokenizador.CasosEspeciales(true);
+        tokenizador.PasarAminuscSinAcentos(true);
+        tokenizador.TokenizarDirectorio("./corpus");
+        return 0;
 }

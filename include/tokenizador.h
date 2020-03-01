@@ -52,6 +52,8 @@ class Tokenizador
             return pasarAminuscSinAcentos;
         }
         void Tokenizar(const std::string&, std::list<std::string>&);
+        bool TokenizarFichero(const std::string&, std::list<std::string>&);
+        bool EscribirFichero(const std::string &, const std::list<std::string>&) const;
         bool Tokenizar(const std::string&, const std::string&);
         bool Tokenizar(const std::string&);
         bool TokenizarListaFicheros(const std::string&);
