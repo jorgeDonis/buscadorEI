@@ -391,7 +391,7 @@ void Estado::set_casos_activos()
 
 bool Estado::es_URL(const string& token) const
 {
-    if (casos_activos[acronimo_ac])
+    if (casos_activos[URL_ac])
     {
         if (token[token.length() - 1] == ':')
             return (!token.find("http:") || !token.find("https:") || !token.find("ftp:"));
