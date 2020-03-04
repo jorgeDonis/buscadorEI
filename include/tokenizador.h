@@ -4,7 +4,6 @@
 #include <string>
 #include <iostream>
 #include <list>
-#include <unordered_set>
 
 class Tokenizador
 {
@@ -25,7 +24,7 @@ class Tokenizador
         bool pasarAminuscSinAcentos;
         void copy_values(const Tokenizador&);
         //para cuando casosEspeciales == true
-        void Tokenizar_especial(const std::string&, std::list<std::string>&);
+        void Tokenizar_especial(const char*, const size_t, std::list<std::string>&);
     public:
         Tokenizador();
         ~Tokenizador();
@@ -51,6 +50,7 @@ class Tokenizador
         {
             return pasarAminuscSinAcentos;
         }
+        void Tokenizar(const char*, const size_t, std::list<std::string> &);
         void Tokenizar(const std::string&, std::list<std::string>&);
         bool TokenizarFichero(const std::string&, std::list<std::string>&);
         bool EscribirFichero(const std::string &, const std::list<std::string>&) const;
@@ -71,21 +71,24 @@ class Estado
         static const std::string URL_ALLOWED_DELI;
         bool char_not_surround(const char &) const;
         bool es_URL(const std::string&) const;
-        bool es_decimal(const unsigned char) const;
+        bool es_decimal(const char) const;
         bool es_decimal(const std::string&) const;
         bool es_email(const std::string&) const;
         bool es_acronimo() const;
         bool es_multipalabra() const;
         bool casos_activos[5] = { false };
     public:
+        char current_char;
         void set_casos_activos();
-        static Tokenizador tokenizador;
-        const std::string& full_string;
-        static std::string::const_iterator absolute_iterator;
+        Tokenizador* tokenizador;
+        const char* full_str;
+        size_t str_len;
+        size_t absolute_iterator;
         std::list<std::string>& tokens;
         Estados estado;
-        Estado(const std::string &str, std::list<std::string>& tk) : estado(_default), full_string(str), tokens(tk){
+        Estado(const char* str, std::list<std::string>& tk) : estado(_default), tokens(tk){
             set_casos_activos();
+            full_str = str;
         }
         void siguiente(std::string&);
         void siguiente_default(std::string&);

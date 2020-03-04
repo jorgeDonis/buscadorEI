@@ -63,8 +63,6 @@ const short Estado::DEFAULT_CHARS[256] =
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 };
-string::const_iterator Estado::absolute_iterator;
-Tokenizador Estado::tokenizador;
 const string Estado::URL_ALLOWED_DELI = "_:/.?&-=#@";
 
 void Tokenizador::minusc_sin_acentos(string& foo)
@@ -187,6 +185,26 @@ void Tokenizador::AnyadirDelimitadoresPalabra(const string& delimitadores_extra)
     }
 }
 
+void Tokenizador::Tokenizar(const char* str, const size_t len, list<string>& tokens)
+{
+    size_t izquierda = 0;
+    size_t derecha = 0;
+    while (derecha != len)
+    {
+        while (izquierda != len && is_delimiter(str[izquierda]))
+            izquierda++;
+        derecha = izquierda;
+        string token = "";
+        while (derecha != len && !is_delimiter(str[derecha]))
+        {
+            token += str[derecha];
+            derecha++;
+        }
+        tokens.push_back(token);
+        izquierda = derecha + 1;
+    }
+}
+
 void Tokenizador::Tokenizar(const string& str, list<string>& tokens)
 {
     tokens.erase(tokens.begin(), tokens.end());
@@ -195,7 +213,7 @@ void Tokenizador::Tokenizar(const string& str, list<string>& tokens)
         bool espacio_delimitador = delimiters.find(" ") != string::npos;
         if (!espacio_delimitador)
             AnyadirDelimitadoresPalabra(" ");
-        Tokenizar_especial(str, tokens);
+        Tokenizar_especial(str.c_str(), str.length(), tokens);
         if (!espacio_delimitador)
         {
             delimiters.erase(delimiters.find(" "));
@@ -203,20 +221,7 @@ void Tokenizador::Tokenizar(const string& str, list<string>& tokens)
         }
     }
     else
-    {
-        string::const_iterator izquierda = str.begin();
-        string::const_iterator derecha = str.begin();
-        while (derecha != str.end())
-        {
-            while (izquierda != str.end() && is_delimiter(*izquierda))
-                izquierda++;
-            derecha = izquierda;
-            while (derecha != str.end() && !is_delimiter(*derecha))
-                derecha++;
-            tokens.push_back(string(izquierda, derecha));
-            izquierda = derecha + 1;
-        }
-    }
+        Tokenizar(str.c_str(), str.length(), tokens);
     if (pasarAminuscSinAcentos)
         for (string& token : tokens)
             minusc_sin_acentos(token);
@@ -346,46 +351,47 @@ bool Tokenizador::TokenizarDirectorio(const string& i)
 }
 
 
-void Tokenizador::Tokenizar_especial(const std::string& str, std::list<std::string>& tokens)
+void Tokenizador::Tokenizar_especial(const char* str, const size_t len, list<string>& tokens)
 {
-    Estado::tokenizador = *this;
     string token;
     Estado estado(str, tokens);
-    for (string::const_iterator it = str.begin(); it != str.end(); ++it)
+    estado.tokenizador = this;
+    estado.str_len = len;
+    while (true)
     {
-        Estado::absolute_iterator = it;
-        token += *it;
-        if (it == str.end() - 1 && *it != '%' && *it != '$')
+        estado.current_char = str[estado.absolute_iterator];
+        if (estado.absolute_iterator == len - 1 && estado.current_char != '%' && estado.current_char != '$')
         {
-            if (is_delimiter(*it) && estado.estado != URL)
+            if (is_delimiter(estado.current_char) && estado.estado != URL)
                 token.erase(token.end() - 1);
             if (token.length() >= 1)
                 tokens.push_back(token);
             return;
         }
         estado.siguiente(token);
-        if (estado.estado == _default && is_delimiter(token[token.length() - 1]))
+        if (estado.estado == _default && is_delimiter(estado.current_char))
         {
             token.erase(token.end() - 1);
             if (token.length() >= 1)
                 tokens.push_back(token);
             token.erase(token.begin(), token.end());
         }
+        estado.absolute_iterator++;
     }
 }
 
 void Estado::set_casos_activos()
 {
     for (const char& c : Estado::URL_ALLOWED_DELI)
-        if (Estado::tokenizador.is_delimiter(c))
+        if (tokenizador->is_delimiter(c))
             casos_activos[URL_ac] = true;
-    if (Estado::tokenizador.is_delimiter('.') && Estado::tokenizador.is_delimiter(','))
+    if (tokenizador->is_delimiter('.') && tokenizador->is_delimiter(','))
         casos_activos[decimal_ac] = true;
-    if (Estado::tokenizador.is_delimiter('@'))
+    if (tokenizador->is_delimiter('@'))
         casos_activos[email_ac] = true;
-    if (Estado::tokenizador.is_delimiter('.'))
+    if (tokenizador->is_delimiter('.'))
         casos_activos[acronimo_ac] = true;
-    if (Estado::tokenizador.is_delimiter('-'))
+    if (tokenizador->is_delimiter('-'))
         casos_activos[multipalabra_ac] = true;
 }
 
@@ -399,19 +405,19 @@ bool Estado::es_URL(const string& token) const
     return false;
 }
 
-bool Estado::es_decimal(const unsigned char c) const
+bool Estado::es_decimal(const char c) const
 {
     return (c >= 48 && c <= 57);
 }
 
 bool Estado::char_not_surround(const char& c) const
 {
-    if (*Estado::absolute_iterator == c)
+    if (current_char == c)
     {
-        if ((Estado::absolute_iterator == full_string.end() - 1 ||
-             !Estado::tokenizador.is_delimiter((unsigned char)*next(Estado::absolute_iterator, 1))) &&
-            (Estado::absolute_iterator == full_string.begin() ||
-             !Estado::tokenizador.is_delimiter((unsigned char)*prev(Estado::absolute_iterator, 1))))
+        if ((absolute_iterator == str_len - 1 ||
+             !tokenizador->is_delimiter(full_str[absolute_iterator + 1]) &&
+            (absolute_iterator == 0 ||
+             !tokenizador->is_delimiter(full_str[absolute_iterator - 1]))))
                 return true;
     }
     return false;
@@ -419,26 +425,29 @@ bool Estado::char_not_surround(const char& c) const
 
 bool Estado::es_decimal(const string& token) const
 {
-    if (casos_activos[decimal_ac] && (((token[token.length() - 1] == '.' || token[token.length() - 1] == ',')
-            && !Estado::tokenizador.is_delimiter(*next(Estado::absolute_iterator, 1)))
-            || token[token.length() - 1] == '%' || token[token.length() - 1] == '$'))
+    if (casos_activos[decimal_ac] && (((current_char == '.' || current_char == ',')
+            && !tokenizador->is_delimiter(full_str[absolute_iterator + 1]))
+            || current_char == '%' || current_char == '$'))
     {
         for (int i = 0; i < token.length() - 1; i++)
             if (!es_decimal((unsigned char) token[i]) && token[i] != '.'
                 && token[i] != ',')
                 return false;
-        string::const_iterator it = Estado::absolute_iterator;
-        while (it != Estado::full_string.end() - 1 &&
-               (!Estado::tokenizador.is_delimiter(*it) || *it == ','
-               || *it == '.'))
+        size_t it = absolute_iterator;
+        while (it != str_len - 1)
         {
-            if (!es_decimal((unsigned char)*it) && *it != '.' && *it != ',')
+            char it_char = full_str[it];
+            if (!tokenizador->is_delimiter(it_char) || it_char == ',' || it_char == '.')
             {
-                if (!(*it == '$' || *it == '%') || !(it == Estado::full_string.end() - 1
-                 || Estado::tokenizador.is_delimiter(*(next(it, 1)))))
-                    return false;
-            }
-            it++;
+                if (!es_decimal((it_char) && it_char != '.' && it_char != ','))
+                {
+                    if (!(it_char == '$' || it_char == '%') 
+                    || !(tokenizador->is_delimiter(full_str[it + 1])))
+                        return false;
+                }
+                it++;
+               }
+               else break;
         }
         return true;
     }
@@ -447,20 +456,19 @@ bool Estado::es_decimal(const string& token) const
 
 bool Estado::es_email(const string& token) const
 {
-    if (casos_activos[email_ac] && char_not_surround('@')
-        && Estado::absolute_iterator != full_string.begin()
-        && Estado::absolute_iterator != full_string.end() - 1)
+    if (casos_activos[email_ac] && char_not_surround('@'))
     {
         if (token.find('@') == token.length() - 1)
         {
-            for (string::const_iterator it = Estado::absolute_iterator + 1; 
-                (*it == '.' || *it == '_' || *it == '-' || *it == '@' ||
-                 !Estado::tokenizador.is_delimiter(*it))
-                && it != Estado::full_string.end();
-                ++it)
+            size_t it = absolute_iterator + 1; 
+            char it_char = full_str[it];
+            while (it != str_len - 1 && (it_char == '.' || it_char == '_' || it_char == '-' || it_char == '@' ||
+                   !tokenizador->is_delimiter(it_char)))
             {
-                if (*it == '@')
+                if (it_char == '@')
                     return false;
+                it++;
+                it_char = full_str[it];
             }
         }
         else
@@ -473,17 +481,12 @@ bool Estado::es_email(const string& token) const
 
 bool Estado::es_acronimo() const
 {
-    return casos_activos[acronimo_ac] && char_not_surround('.')
-            && Estado::absolute_iterator != full_string.begin()
-            && Estado::absolute_iterator != full_string.end() - 1;
-
+    return casos_activos[acronimo_ac] && char_not_surround('.');
 }
 
 bool Estado::es_multipalabra() const
 {
-    return casos_activos[multipalabra_ac] && char_not_surround('-')
-            && Estado::absolute_iterator != full_string.begin()
-            && Estado::absolute_iterator != full_string.end() - 1;
+    return casos_activos[multipalabra_ac] && char_not_surround('-');
 }
 
 void Estado::siguiente_default(string& token)
@@ -492,27 +495,30 @@ void Estado::siguiente_default(string& token)
         estado = URL;
     else if (es_decimal(token))
     {
-        if (*Estado::absolute_iterator == '%' || *Estado::absolute_iterator == '$')
+        if (current_char == '%' || current_char == '$')
             siguiente_decimal(token);
         else
             estado = decimal;
-        if (Estado::absolute_iterator == full_string.begin() ||
-            Estado::tokenizador.is_delimiter(*prev(Estado::absolute_iterator, 1)))
+        if (absolute_iterator == 0 ||
+            tokenizador->is_delimiter(full_str[absolute_iterator - 1]))
             token.insert(0, "0");
     }
-    else if (es_email(token))
-        estado = email;
-    else if (es_acronimo())
-        estado = acronimo;
-    else if (es_multipalabra())
-        estado = multipalabra;
+    else if (absolute_iterator != 0 && absolute_iterator != str_len - 1)
+    {
+        if (es_email(token))
+            estado = email;
+        else if (es_acronimo())
+            estado = acronimo;
+        else if (es_multipalabra())
+            estado = multipalabra;
+    } 
     else
         estado = _default;
 }
 
 void Estado::siguiente_decimal(string& token)
 {
-    if (*Estado::absolute_iterator == '%')
+    if (current_char == '%')
     {
         estado = pctg;
         token.erase(token.end() - 1, token.end());
@@ -521,7 +527,7 @@ void Estado::siguiente_decimal(string& token)
         tokens.push_back("%");
         Estado::absolute_iterator++;
     }
-    else if (*Estado::absolute_iterator == '$')
+    else if (current_char == '$')
     {
         estado = dollar;
         token.erase(token.end() - 1, token.end());
@@ -530,11 +536,11 @@ void Estado::siguiente_decimal(string& token)
         tokens.push_back("$");
         Estado::absolute_iterator++;
     }
-    else if (!Estado::tokenizador.is_delimiter(*Estado::absolute_iterator) || 
+    else if (!tokenizador->is_delimiter(current_char) || 
        char_not_surround('.') || char_not_surround(','))
         estado = decimal;
-    else if (!Estado::tokenizador.is_delimiter(*Estado::absolute_iterator) &&
-             !es_decimal((unsigned char)*Estado::absolute_iterator))
+    else if (!tokenizador->is_delimiter(current_char) &&
+             !es_decimal(current_char))
         estado = acronimo;
     else
         estado = _default;
@@ -545,29 +551,29 @@ void Estado::siguiente(string& token)
     switch (estado)
     {
         case _default:
-            if (!Estado::DEFAULT_CHARS[(unsigned char) *Estado::absolute_iterator])
+            if (!Estado::DEFAULT_CHARS[current_char])
                 siguiente_default(token);
             break;
         case URL:
-            if (Estado::tokenizador.is_delimiter(*Estado::absolute_iterator)
-                && Estado::URL_ALLOWED_DELI.find(*Estado::absolute_iterator) == string::npos)
+            if (tokenizador->is_delimiter(current_char)
+                && Estado::URL_ALLOWED_DELI.find(current_char) == string::npos)
                 estado = _default;
             break;
         case decimal:
             siguiente_decimal(token);
             break;
         case email:
-            if (Estado::tokenizador.is_delimiter(*Estado::absolute_iterator)
+            if (tokenizador->is_delimiter(current_char)
                 && !char_not_surround('.') && !char_not_surround('_') && !char_not_surround('-'))
                 estado = _default;
             break;
         case acronimo:
-            if (Estado::tokenizador.is_delimiter(*Estado::absolute_iterator)
+            if (tokenizador->is_delimiter(current_char)
                 && !char_not_surround('.'))
                 estado = _default;
             break;
         case multipalabra:
-            if (Estado::tokenizador.is_delimiter(*Estado::absolute_iterator)
+            if (tokenizador->is_delimiter(current_char)
                     && !char_not_surround('-'))
                 estado = _default;
             break;
