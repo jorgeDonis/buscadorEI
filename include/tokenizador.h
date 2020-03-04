@@ -86,9 +86,11 @@ class Estado
         size_t absolute_iterator;
         std::list<std::string>& tokens;
         Estados estado;
-        Estado(const char* str, std::list<std::string>& tk) : estado(_default), tokens(tk){
+        Estado(const char* str, std::list<std::string>& tk, Tokenizador* tok) : estado(_default), tokens(tk){
+            tokenizador = tok;
             set_casos_activos();
             full_str = str;
+            absolute_iterator = 0;
         }
         void siguiente(std::string&);
         void siguiente_default(std::string&);

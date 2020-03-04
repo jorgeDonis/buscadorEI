@@ -235,10 +235,10 @@ bool Tokenizador::TokenizarFichero(const string& filename, list<string>& tokens)
     struct stat fileInfo = {0};
     fstat(fd, &fileInfo);
     char* map = (char*) mmap(0, fileInfo.st_size, PROT_READ, MAP_SHARED, fd, 0);
-    string full_str(map);
+    const char* c_map = map;
+    Tokenizar(c_map, fileInfo.st_size, tokens);
     munmap(map, fileInfo.st_size);
     close(fd);
-    Tokenizar(full_str, tokens);
     return true;
 }
 
@@ -353,15 +353,24 @@ bool Tokenizador::TokenizarDirectorio(const string& i)
 
 void Tokenizador::Tokenizar_especial(const char* str, const size_t len, list<string>& tokens)
 {
+    if (!len)
+        return;
     string token;
-    Estado estado(str, tokens);
-    estado.tokenizador = this;
+    Estado estado(str, tokens, this);
     estado.str_len = len;
     while (true)
     {
         estado.current_char = str[estado.absolute_iterator];
-        if (estado.absolute_iterator == len - 1 && estado.current_char != '%' && estado.current_char != '$')
+        token += estado.current_char;
+        if (estado.absolute_iterator == len - 1)
         {
+            if (estado.current_char == '$' || estado.current_char == '%')
+            {
+                token.erase(token.end() - 1, token.end());
+                tokens.push_back(token);
+                tokens.push_back(string(1, estado.current_char));
+                return;
+            }
             if (is_delimiter(estado.current_char) && estado.estado != URL)
                 token.erase(token.end() - 1);
             if (token.length() >= 1)
@@ -439,14 +448,14 @@ bool Estado::es_decimal(const string& token) const
             char it_char = full_str[it];
             if (!tokenizador->is_delimiter(it_char) || it_char == ',' || it_char == '.')
             {
-                if (!es_decimal((it_char) && it_char != '.' && it_char != ','))
+                if (!es_decimal(it_char) && it_char != '.' && it_char != ',')
                 {
                     if (!(it_char == '$' || it_char == '%') 
                     || !(tokenizador->is_delimiter(full_str[it + 1])))
                         return false;
                 }
                 it++;
-               }
+            }
                else break;
         }
         return true;
@@ -525,7 +534,7 @@ void Estado::siguiente_decimal(string& token)
         tokens.push_back(token);
         token.erase(token.begin(), token.end());
         tokens.push_back("%");
-        Estado::absolute_iterator++;
+        absolute_iterator++;
     }
     else if (current_char == '$')
     {
@@ -534,7 +543,7 @@ void Estado::siguiente_decimal(string& token)
         tokens.push_back(token);
         token.erase(token.begin(), token.end());
         tokens.push_back("$");
-        Estado::absolute_iterator++;
+        absolute_iterator++;
     }
     else if (!tokenizador->is_delimiter(current_char) || 
        char_not_surround('.') || char_not_surround(','))
