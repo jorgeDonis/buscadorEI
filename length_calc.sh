@@ -1,8 +1,8 @@
 #!/bin/bash 
 
-# cp ./src/test_speed.cpp ./src/main.cpp
-# make
-# ./practica1
+cp ./src/test_speed.cpp ./src/main.cpp
+make
+./practica1
 
 
 for file in corpus/*
@@ -17,4 +17,4 @@ do
     fi
 done
 
-# rm -f corpus/*.tk
+rm -f corpus/*.tk
