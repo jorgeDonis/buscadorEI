@@ -24,7 +24,7 @@ class Tokenizador
         bool pasarAminuscSinAcentos;
         void copy_values(const Tokenizador&);
         //para cuando casosEspeciales == true
-        void Tokenizar_especial(const char *, const size_t, std::string&);
+        void Tokenizar_especial(const char*, char*, size_t len) const;
         void Tokenizar_especial(const char*, const size_t, std::list<std::string>&);
     public:
         Tokenizador();
@@ -54,9 +54,9 @@ class Tokenizador
         void Tokenizar(const char *, const size_t, std::string&);
         void Tokenizar(const char*, const size_t, std::list<std::string> &);
         void Tokenizar(const std::string&, std::list<std::string>&);
-        bool TokenizarFichero(const std::string&, const char*, size_t);
+        bool LeerFichero(const std::string&, const char*& , size_t &, int&);
         bool EscribirFichero(const std::string&, const char*, size_t) const;
-        bool Tokenizar(const std::string&, const std::string&);
+        bool Tokenizar(const std::string &, const std::string &);
         bool Tokenizar(const std::string&);
         bool TokenizarListaFicheros(const std::string&);
         bool TokenizarDirectorio(const std::string&);
