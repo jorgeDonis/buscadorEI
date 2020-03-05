@@ -24,6 +24,7 @@ class Tokenizador
         bool pasarAminuscSinAcentos;
         void copy_values(const Tokenizador&);
         //para cuando casosEspeciales == true
+        void Tokenizar_especial(const char *, const size_t, std::string&);
         void Tokenizar_especial(const char*, const size_t, std::list<std::string>&);
     public:
         Tokenizador();
@@ -50,10 +51,11 @@ class Tokenizador
         {
             return pasarAminuscSinAcentos;
         }
+        void Tokenizar(const char *, const size_t, std::string&);
         void Tokenizar(const char*, const size_t, std::list<std::string> &);
         void Tokenizar(const std::string&, std::list<std::string>&);
-        bool TokenizarFichero(const std::string&, std::list<std::string>&);
-        bool EscribirFichero(const std::string &, const std::list<std::string>&) const;
+        bool TokenizarFichero(const std::string&, const char*, size_t);
+        bool EscribirFichero(const std::string&, const char*, size_t) const;
         bool Tokenizar(const std::string&, const std::string&);
         bool Tokenizar(const std::string&);
         bool TokenizarListaFicheros(const std::string&);
@@ -86,7 +88,8 @@ class Estado
         size_t absolute_iterator;
         std::list<std::string>& tokens;
         Estados estado;
-        Estado(const char* str, std::list<std::string>& tk, Tokenizador* tok) : estado(_default), tokens(tk){
+        Estado(const char* str, std::list<std::string>& tk, Tokenizador* tok) : estado(_default), tokens(tk) 
+        {
             tokenizador = tok;
             set_casos_activos();
             full_str = str;

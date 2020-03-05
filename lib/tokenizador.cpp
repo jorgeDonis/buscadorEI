@@ -227,7 +227,7 @@ void Tokenizador::Tokenizar(const string& str, list<string>& tokens)
             minusc_sin_acentos(token);
 }
 
-bool Tokenizador::TokenizarFichero(const string& filename, list<string>& tokens)
+bool Tokenizador::TokenizarFichero(const string& filename, const char* output_tokens, size_t& token_len)
 {
     int fd = open(filename.c_str(), O_RDONLY, (mode_t)0600);
     if (fd == -1)
@@ -236,23 +236,24 @@ bool Tokenizador::TokenizarFichero(const string& filename, list<string>& tokens)
     fstat(fd, &fileInfo);
     char* map = (char*) mmap(0, fileInfo.st_size, PROT_READ, MAP_SHARED, fd, 0);
     const char* c_map = map;
-    Tokenizar(c_map, fileInfo.st_size, tokens);
+    string output_tokens_str = "";
+    Tokenizar(c_map, fileInfo.st_size, output_tokens_str);
+    token_len = output_tokens_str.length();
+    output_tokens = output_tokens_str.c_str();
     munmap(map, fileInfo.st_size);
     close(fd);
     return true;
 }
 
-bool Tokenizador::EscribirFichero(const string& output_filename, const list<string>& tokens) const
+bool Tokenizador::EscribirFichero(const string& output_filename, const char* tokens, size_t token_len) const
 {
+    token_len++;
     int fd = open(output_filename.c_str(), O_RDWR | O_CREAT | O_TRUNC, (mode_t)0600);
     if (fd == -1)
         return false;
-    size_t textsize = 1;
-    for (const string& token : tokens)
-        textsize += token.length() + 1;
-    lseek(fd, textsize - 1, SEEK_SET);
+    lseek(fd, token_len - 1, SEEK_SET);
     write(fd, "", 1);
-    char* map = (char*) mmap(0, textsize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    char* map = (char*) mmap(0, token_len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     unsigned i = 0;
     for (const string& token : tokens)
     {
@@ -273,8 +274,8 @@ bool Tokenizador::EscribirFichero(const string& output_filename, const list<stri
 
 bool Tokenizador::Tokenizar(const string& input_filename, const string& output_filename)
 {
-    list<string> tokens;
-    if (TokenizarFichero(input_filename, tokens))
+    const char* output_tokens;
+    if (TokenizarFichero(input_filename, output_tokens))
     {
         if (!EscribirFichero(output_filename, tokens))
         {
