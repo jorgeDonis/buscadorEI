@@ -64,6 +64,7 @@ const short Estado::DEFAULT_CHARS[256] =
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 };
 const string Estado::URL_ALLOWED_DELI = "_:/.?&-=#@";
+size_t EstadoChar::iterador_salida;
 
 void Tokenizador::minusc_sin_acentos(string& foo)
 {
@@ -227,66 +228,42 @@ void Tokenizador::Tokenizar(const string& str, list<string>& tokens)
             minusc_sin_acentos(token);
 }
 
-bool Tokenizador::TokenizarFichero(const string& filename, list<string>& tokens)
-{
-    int fd = open(filename.c_str(), O_RDONLY, (mode_t)0600);
-    if (fd == -1)
-        return false;
-    struct stat fileInfo = {0};
-    fstat(fd, &fileInfo);
-    char* map = (char*) mmap(0, fileInfo.st_size, PROT_READ, MAP_SHARED, fd, 0);
-    const char* c_map = map;
-    Tokenizar(c_map, fileInfo.st_size, tokens);
-    munmap(map, fileInfo.st_size);
-    close(fd);
-    return true;
-}
-
-bool Tokenizador::EscribirFichero(const string& output_filename, const list<string>& tokens) const
-{
-    int fd = open(output_filename.c_str(), O_RDWR | O_CREAT | O_TRUNC, (mode_t)0600);
-    if (fd == -1)
-        return false;
-    size_t textsize = 1;
-    for (const string& token : tokens)
-        textsize += token.length() + 1;
-    lseek(fd, textsize - 1, SEEK_SET);
-    write(fd, "", 1);
-    char* map = (char*) mmap(0, textsize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    unsigned i = 0;
-    for (const string& token : tokens)
-    {
-        for (unsigned j = 0; j < token.length(); j++)
-        {
-            map[i] = token[j];
-            i++;
-        }
-        map[i] = '\n';
-        i++;
-    }
-    if (msync(map, textsize, MS_SYNC) == -1)
-        perror("Could not sync the file to disk");
-    munmap(map, textsize);
-    close(fd);
-    return true;
-}
-
 bool Tokenizador::Tokenizar(const string& input_filename, const string& output_filename)
 {
-    list<string> tokens;
-    if (TokenizarFichero(input_filename, tokens))
+    int ifd = open(input_filename.c_str(), O_RDONLY, (mode_t)0600);
+    if (!ifd)
     {
-        if (!EscribirFichero(output_filename, tokens))
-        {
-            cerr << "ERROR: Error al crear el fichero: " << output_filename << endl;
-            return false;
-        }
-    }
-    else
-    {
-        cerr << "ERROR: No existe el archivo: " << input_filename << endl;
+        cerr << "ERROR: error al leer el fichero" << input_filename << endl;
         return false;
     }
+    struct stat fileInfo = {0};
+    fstat(ifd, &fileInfo);
+    char *input_map = (char *)mmap(0, fileInfo.st_size, PROT_READ, MAP_SHARED, ifd, 0);
+
+    size_t len = fileInfo.st_size + 1;
+    int ofd = open(output_filename.c_str(), O_RDWR | O_CREAT | O_TRUNC, (mode_t)0600);
+    if (!ofd)
+    {
+        cerr << "ERROR: error al crear el fichero" << output_filename << endl;
+        return false;   
+    }
+    lseek(ofd, len, SEEK_SET);
+    write(ofd, "", 1);
+
+    char *output_map = (char *)mmap(0, len, PROT_READ | PROT_WRITE, MAP_SHARED, ofd, 0);
+
+    Tokenizar_fichero(input_map, output_map, len - 1);
+
+    if (msync(output_map, len, MS_SYNC) == -1)
+    {
+        cerr << "ERROR: no se pudo sincronizar con el disco" << endl;
+        return false;
+    }
+    munmap(output_map, len);
+    close(ofd);
+    munmap((char *)input_map, fileInfo.st_size);
+    close(ifd);
+    truncate(output_filename.c_str(), EstadoChar::iterador_salida - 1);
     return true;
 }
 
@@ -594,4 +571,71 @@ void Estado::siguiente(string& token)
             siguiente_default(token);
             break;
     }
+}
+
+void EstadoChar::escribir_token(const size_t inicio, const size_t final)
+{
+    if (inicio <= final)
+    {
+        for (size_t i = inicio; i <= final; i++)
+        {
+            mapa_salida[iterador_salida] = Tokenizador::MAPA_ACENTOS[mapa_entrada[i]];
+            iterador_salida++;
+        }
+        mapa_salida[iterador_salida] = '\n';
+        iterador_salida++;
+    }
+}
+
+void Tokenizador::Tokenizar_fichero(const char* mapa_entrada, char* mapa_salida, const size_t len)
+{
+    EstadoChar estado(this, mapa_entrada, mapa_salida, len);
+    while (true)
+    {
+        estado.current_char = MAPA_ACENTOS[mapa_entrada[estado.iterador_entrada_derecha]];
+        if (estado.iterador_entrada_derecha == len - 1)
+        {
+            if (estado.current_char == '$' || estado.current_char == '%')
+            {
+                estado.escribir_token(estado.iterador_entrada_izquierda, estado.iterador_entrada_derecha - 1);
+                estado.mapa_salida[estado.iterador_salida] = estado.current_char;
+                estado.iterador_salida++;
+                estado.mapa_salida[estado.iterador_salida] = '\n';
+                estado.iterador_salida++;
+                return;
+            }
+            if (is_delimiter(estado.current_char) && estado.estado != URL)
+                estado.iterador_entrada_derecha--;
+            estado.escribir_token(estado.iterador_entrada_izquierda, estado.iterador_entrada_derecha);
+            return;
+        }
+        estado.siguiente();
+        if (estado.estado == _default && is_delimiter(estado.current_char))
+        {
+            if (estado.iterador_entrada_derecha)
+                estado.escribir_token(estado.iterador_entrada_izquierda, estado.iterador_entrada_derecha - 1);
+            estado.iterador_entrada_izquierda = estado.iterador_entrada_derecha + 1;
+        }
+        estado.iterador_entrada_derecha++;
+    }
+}
+
+void EstadoChar::set_casos_activos()
+{
+    for (const char &c : Estado::URL_ALLOWED_DELI)
+        if (tokenizador->is_delimiter(c))
+            casos_activos[URL_ac] = true;
+    if (tokenizador->is_delimiter('.') && tokenizador->is_delimiter(','))
+        casos_activos[decimal_ac] = true;
+    if (tokenizador->is_delimiter('@'))
+        casos_activos[email_ac] = true;
+    if (tokenizador->is_delimiter('.'))
+        casos_activos[acronimo_ac] = true;
+    if (tokenizador->is_delimiter('-'))
+        casos_activos[multipalabra_ac] = true;
+}
+
+void EstadoChar::siguiente()
+{
+
 }

@@ -12,7 +12,6 @@ class Tokenizador
         static const bool CASOS_ESPECIALES_DEFAULT;
         static const bool PASAR_MINUSC_DEFAULT;
         static const std::string DEFAULT_DELIMITERS;
-        static const short MAPA_ACENTOS[256];
         static const std::string DEFAULT_FILELIST_FILENAME;
         static bool is_dir(const std::string&);
         static bool file_exists(const std::string&);
@@ -25,7 +24,9 @@ class Tokenizador
         void copy_values(const Tokenizador&);
         //para cuando casosEspeciales == true
         void Tokenizar_especial(const char*, const size_t, std::list<std::string>&);
+        void Tokenizar_fichero(const char*, char*, const size_t);
     public:
+        static const short MAPA_ACENTOS[256];
         Tokenizador();
         ~Tokenizador();
         Tokenizador(const std::string&, const bool&, const bool&);
@@ -52,8 +53,6 @@ class Tokenizador
         }
         void Tokenizar(const char*, const size_t, std::list<std::string> &);
         void Tokenizar(const std::string&, std::list<std::string>&);
-        bool TokenizarFichero(const std::string&, std::list<std::string>&);
-        bool EscribirFichero(const std::string &, const std::list<std::string>&) const;
         bool Tokenizar(const std::string&, const std::string&);
         bool Tokenizar(const std::string&);
         bool TokenizarListaFicheros(const std::string&);
@@ -68,7 +67,6 @@ class Estado
 {
     private:
         static const short DEFAULT_CHARS[256];
-        static const std::string URL_ALLOWED_DELI;
         bool char_not_surround(const char &) const;
         bool es_URL(const std::string&) const;
         bool es_decimal(const char) const;
@@ -78,6 +76,7 @@ class Estado
         bool es_multipalabra() const;
         bool casos_activos[5] = { false };
     public:
+        static const std::string URL_ALLOWED_DELI;
         char current_char;
         void set_casos_activos();
         Tokenizador* tokenizador;
@@ -95,7 +94,46 @@ class Estado
         void siguiente(std::string&);
         void siguiente_default(std::string&);
         void siguiente_decimal(std::string&);
+};
 
+
+//Igual que Estado, pero no usa lista de tokens ni string
+class EstadoChar
+{
+private:
+    bool casos_activos[5] = {false};
+    bool char_not_surround(const char &) const;
+    bool es_URL() const;
+    bool es_decimal(const char) const;
+    bool es_decimal() const;
+    bool es_email() const;
+    bool es_acronimo() const;
+    bool es_multipalabra() const;
+    void set_casos_activos();
+public:
+    char current_char;
+    Tokenizador* tokenizador;
+    const char* mapa_entrada;
+    char* mapa_salida;
+    size_t len;
+    size_t iterador_entrada_izquierda;
+    size_t iterador_entrada_derecha;
+    static size_t iterador_salida;
+    Estados estado;
+    void escribir_token(const size_t, const size_t);
+    EstadoChar(Tokenizador* tok, const char* map_in, char* map_out, const size_t len)
+    {
+        estado = _default;
+        tokenizador = tok;
+        set_casos_activos();
+        mapa_entrada = map_in;
+        mapa_salida = map_out;
+        this->len = len;
+        iterador_entrada_izquierda = iterador_entrada_derecha = iterador_salida = 0;
+    }
+    void siguiente();
+    void siguiente_default();
+    void siguiente_decimal();
 };
 
 #endif
