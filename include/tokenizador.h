@@ -15,7 +15,6 @@ class Tokenizador
         static const std::string DEFAULT_FILELIST_FILENAME;
         static bool is_dir(const std::string&);
         static bool file_exists(const std::string&);
-        static void minusc_sin_acentos(std::string&);
         std::string delimiters;
         //delimiters_set[i] = 1 si el caracter i es delimitador. De lo contrario, 0.        
         short delimiters_set[256] = {0};
@@ -26,6 +25,7 @@ class Tokenizador
         void Tokenizar_especial(const char*, const size_t, std::list<std::string>&);
         void Tokenizar_fichero(const char*, char*, const size_t);
     public:
+        static void minusc_sin_acentos(std::string&);
         static const short MAPA_ACENTOS[256];
         Tokenizador();
         ~Tokenizador();
@@ -66,16 +66,16 @@ enum EspecialesActivos {URL_ac, decimal_ac, email_ac, acronimo_ac, multipalabra_
 class Estado
 {
     private:
-        static const short DEFAULT_CHARS[256];
         bool char_not_surround(const char &) const;
         bool es_URL(const std::string&) const;
-        bool es_decimal(const char) const;
         bool es_decimal(const std::string&) const;
         bool es_email(const std::string&) const;
         bool es_acronimo() const;
         bool es_multipalabra() const;
         bool casos_activos[5] = { false };
     public:
+        static bool es_decimal(const char);
+        static const short DEFAULT_CHARS[256];
         static const std::string URL_ALLOWED_DELI;
         char current_char;
         void set_casos_activos();
@@ -104,8 +104,7 @@ private:
     bool casos_activos[5] = {false};
     bool char_not_surround(const char &) const;
     bool es_URL() const;
-    bool es_decimal(const char) const;
-    bool es_decimal() const;
+    bool es_decimal();
     bool es_email() const;
     bool es_acronimo() const;
     bool es_multipalabra() const;

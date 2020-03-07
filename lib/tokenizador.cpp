@@ -338,7 +338,10 @@ void Tokenizador::Tokenizar_especial(const char* str, const size_t len, list<str
     estado.str_len = len;
     while (true)
     {
-        estado.current_char = str[estado.absolute_iterator];
+        if (pasarAminuscSinAcentos)
+            estado.current_char = MAPA_ACENTOS[(unsigned char)str[estado.absolute_iterator]];
+        else
+            estado.current_char = str[estado.absolute_iterator];
         token += estado.current_char;
         if (estado.absolute_iterator == len - 1)
         {
@@ -392,7 +395,7 @@ bool Estado::es_URL(const string& token) const
     return false;
 }
 
-bool Estado::es_decimal(const char c) const
+bool Estado::es_decimal(const char c)
 {
     return (c >= 48 && c <= 57);
 }
@@ -573,19 +576,9 @@ void Estado::siguiente(string& token)
     }
 }
 
-void EstadoChar::escribir_token(const size_t inicio, const size_t final)
-{
-    if (inicio <= final)
-    {
-        for (size_t i = inicio; i <= final; i++)
-        {
-            mapa_salida[iterador_salida] = Tokenizador::MAPA_ACENTOS[(unsigned char) mapa_entrada[i]];
-            iterador_salida++;
-        }
-        mapa_salida[iterador_salida] = '\n';
-        iterador_salida++;
-    }
-}
+//
+//VERSION QUE USA PUNTEROS (para ficheros) Y NO USA REPRESENTACIONES INTERMEDIAS
+//
 
 void Tokenizador::Tokenizar_fichero(const char* mapa_entrada, char* mapa_salida, const size_t len)
 {
@@ -620,6 +613,33 @@ void Tokenizador::Tokenizar_fichero(const char* mapa_entrada, char* mapa_salida,
     }
 }
 
+void EstadoChar::escribir_token(const size_t inicio, const size_t final)
+{
+    if (inicio <= final)
+    {
+        for (size_t i = inicio; i <= final; i++)
+        {
+            mapa_salida[iterador_salida] = Tokenizador::MAPA_ACENTOS[(unsigned char) mapa_entrada[i]];
+            iterador_salida++;
+        }
+        mapa_salida[iterador_salida] = '\n';
+        iterador_salida++;
+    }
+}
+
+bool EstadoChar::char_not_surround(const char & c) const
+{
+    if (current_char == c)
+    {
+        if ((iterador_entrada_derecha == len - 1 ||
+             !tokenizador->is_delimiter(mapa_entrada[iterador_entrada_derecha + 1]) &&
+            (iterador_entrada_derecha == 0 ||
+             !tokenizador->is_delimiter(mapa_entrada[iterador_entrada_derecha - 1]))))
+                return true;
+    }
+    return false;
+}
+
 void EstadoChar::set_casos_activos()
 {
     for (const char &c : Estado::URL_ALLOWED_DELI)
@@ -635,7 +655,183 @@ void EstadoChar::set_casos_activos()
         casos_activos[multipalabra_ac] = true;
 }
 
+bool EstadoChar::es_URL() const
+{
+    if (casos_activos[URL_ac])
+    {
+        if (current_char == ':')
+        {
+            string s(mapa_entrada, iterador_entrada_izquierda,
+                     iterador_entrada_derecha - iterador_entrada_izquierda);
+            Tokenizador::minusc_sin_acentos(s);
+            return (!s.find("http") || !s.find("https") || !s.find("ftp"));
+        }
+    }
+    return false;
+}
+
+bool EstadoChar::es_decimal()
+{
+    if (casos_activos[decimal_ac] && (((current_char == '.' || current_char == ',')
+            && !tokenizador->is_delimiter(mapa_entrada[iterador_entrada_derecha + 1]))
+            || current_char == '%' || current_char == '$'))
+    {
+        for (size_t i = iterador_entrada_izquierda; i <= iterador_entrada_derecha; i++)
+            if (!Estado::es_decimal((unsigned char) mapa_entrada[i]) && mapa_entrada[i] != '.'
+                && mapa_entrada[i] != ',')
+                return false;
+        size_t it = iterador_entrada_derecha;
+        while (it != len - 1)
+        {
+            char it_char = mapa_entrada[it];
+            if (!tokenizador->is_delimiter(it_char) || it_char == ',' || it_char == '.')
+            {
+                if (!Estado::es_decimal(it_char) && it_char != '.' && it_char != ',')
+                {
+                    if (!(it_char == '$' || it_char == '%') 
+                    || !(tokenizador->is_delimiter(mapa_entrada[it + 1])))
+                        return false;
+                }
+                it++;
+            }
+               else break;
+        }
+        return true;
+    }
+    return false;
+}
+
+bool EstadoChar::es_email() const
+{
+    if (casos_activos[email_ac] && char_not_surround('@'))
+    {
+        string s(mapa_entrada, iterador_entrada_izquierda, 
+                 iterador_entrada_derecha - iterador_entrada_izquierda);
+        if (s.find('@') == s.length() - 1)
+        {
+            size_t it = iterador_entrada_derecha + 1; 
+            char it_char = mapa_entrada[it];
+            while (it != len - 1 && (it_char == '.' || it_char == '_' || it_char == '-' ||
+                   it_char == '@' || !tokenizador->is_delimiter(it_char)))
+            {
+                if (it_char == '@')
+                    return false;
+                it++;
+                it_char = mapa_entrada[it];
+            }
+        }
+        else
+            return false;
+    }
+    else
+        return false;
+    return true;
+}
+
+bool EstadoChar::es_acronimo() const
+{
+    return casos_activos[acronimo_ac] && char_not_surround('.');
+}
+
+bool EstadoChar::es_multipalabra() const
+{
+    return casos_activos[multipalabra_ac] && char_not_surround('-');
+}
+
+void EstadoChar::siguiente_decimal()
+{
+    if (current_char == '%')
+    {
+        estado = pctg;
+        escribir_token(iterador_entrada_izquierda, iterador_entrada_derecha - 1);
+        mapa_salida[iterador_salida] = '%';
+        iterador_salida++;
+        mapa_salida[iterador_salida] = '\n';
+        iterador_salida++;
+        iterador_entrada_izquierda = iterador_entrada_derecha + 1;
+    }
+    else if (current_char == '$')
+    {
+        estado = dollar;
+        escribir_token(iterador_entrada_izquierda, iterador_entrada_derecha - 1);
+        mapa_salida[iterador_salida] = '$';
+        iterador_salida++;
+        mapa_salida[iterador_salida] = '\n';
+        iterador_salida++;
+        iterador_entrada_izquierda = iterador_entrada_derecha + 1;
+    }
+    else if (!tokenizador->is_delimiter(current_char) ||
+             char_not_surround('.') || char_not_surround(','))
+        estado = decimal;
+    else if (!tokenizador->is_delimiter(current_char) &&
+             !Estado::es_decimal(current_char))
+        estado = acronimo;
+    else
+        estado = _default;
+}
+
+void EstadoChar::siguiente_default()
+{
+    if (es_URL())
+        estado = URL;
+    else if (es_decimal())
+    {
+        if (current_char == '%' || current_char == '$')
+            siguiente_decimal();
+        else
+            estado = decimal;
+        if (iterador_entrada_derecha == 0 ||
+            tokenizador->is_delimiter(mapa_entrada[iterador_entrada_derecha - 1]))
+        {
+            mapa_salida[iterador_salida] = '0';
+            iterador_salida++;
+        }
+    }
+    else if (iterador_entrada_derecha != 0 && iterador_entrada_derecha != len - 1)
+    {
+        if (es_email())
+            estado = email;
+        else if (es_acronimo())
+            estado = acronimo;
+        else if (es_multipalabra())
+            estado = multipalabra;
+        else
+            estado = _default;
+    }
+}
+
 void EstadoChar::siguiente()
 {
-
+    switch (estado)
+    {
+    case _default:
+        if (!Estado::DEFAULT_CHARS[current_char])
+            siguiente_default();
+        break;
+    case URL:
+        if (tokenizador->is_delimiter(current_char) && Estado::URL_ALLOWED_DELI.find(current_char) == string::npos)
+            estado = _default;
+        break;
+    case decimal:
+        siguiente_decimal();
+        break;
+    case email:
+        if (tokenizador->is_delimiter(current_char) && !char_not_surround('.') && !char_not_surround('_') && !char_not_surround('-'))
+            estado = _default;
+        break;
+    case acronimo:
+        if (tokenizador->is_delimiter(current_char) && !char_not_surround('.'))
+            estado = _default;
+        break;
+    case multipalabra:
+        if (tokenizador->is_delimiter(current_char) && !char_not_surround('-'))
+            estado = _default;
+        break;
+    case pctg:
+        siguiente_default();
+        break;
+    case dollar:
+        siguiente_default();
+        break;
+    }
 }

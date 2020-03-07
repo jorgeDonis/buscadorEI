@@ -8,7 +8,7 @@ using namespace std;
 
 int main()
 {
-        Tokenizador a("\t ,;:.-+/*_`'{}[]()!?&#\"\\<>", true, true);
+        Tokenizador a("\t ,;:.-+/*_`'{}[]()!?&#\"\\<>\n@", true, true);
         a.Tokenizar("corpus.txt");
         return 0;
 }
