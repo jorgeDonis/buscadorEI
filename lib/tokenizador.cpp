@@ -297,6 +297,7 @@ bool Tokenizador::Tokenizar(const string& i)
 
 bool Tokenizador::TokenizarListaFicheros(const string& i)
 {
+    AnyadirDelimitadoresPalabra("\n");
     ifstream ifs(i);
     bool execution_is_right = true;
     if (ifs.is_open())
