@@ -579,7 +579,7 @@ void EstadoChar::escribir_token(const size_t inicio, const size_t final)
     {
         for (size_t i = inicio; i <= final; i++)
         {
-            mapa_salida[iterador_salida] = Tokenizador::MAPA_ACENTOS[mapa_entrada[i]];
+            mapa_salida[iterador_salida] = Tokenizador::MAPA_ACENTOS[(unsigned char) mapa_entrada[i]];
             iterador_salida++;
         }
         mapa_salida[iterador_salida] = '\n';
@@ -592,7 +592,7 @@ void Tokenizador::Tokenizar_fichero(const char* mapa_entrada, char* mapa_salida,
     EstadoChar estado(this, mapa_entrada, mapa_salida, len);
     while (true)
     {
-        estado.current_char = MAPA_ACENTOS[mapa_entrada[estado.iterador_entrada_derecha]];
+        estado.current_char = MAPA_ACENTOS[(unsigned char) mapa_entrada[estado.iterador_entrada_derecha]];
         if (estado.iterador_entrada_derecha == len - 1)
         {
             if (estado.current_char == '$' || estado.current_char == '%')
