@@ -1,0 +1,4 @@
+#ifndef __INDEXADOR_INFORMACION__
+#define __INDEXADOR_INFORMACION__
+
+#endif
