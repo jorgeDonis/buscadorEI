@@ -28,7 +28,7 @@ class InformacionTermino
         std::unordered_map<long int, InfTermDoc> l_docs;
         void copy_vals(const InformacionTermino&);
     public:
-        InformacionTermino() {ftc = 0;}
+        InformacionTermino() : l_docs() {ftc = 0;}
         InformacionTermino(const InformacionTermino&);
         ~InformacionTermino();
         InformacionTermino& operator=(const InformacionTermino&);
