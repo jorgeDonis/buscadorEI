@@ -6,11 +6,13 @@
 #include <unordered_set>
 #include "indexadorInformacion.h"
 #include "tokenizador.h"
+#include "stemmer.h"
 
 class IndexadorHash
 {
     friend std::ostream& operator<<(std::ostream&, const IndexadorHash&);
     private:
+        const size_t MAX_PATHNAME_LEN = 256;
         IndexadorHash();
         std::unordered_map<std::string, InformacionTermino> indice;
         InfColeccionDocs informacionColeccionDocs;
@@ -21,8 +23,15 @@ class IndexadorHash
         Tokenizador tok;
         std::string directorioIndice;
         int tipoStemmer;
+        stemmerPorter stemmer;
         bool almacenarEnDisco;
         bool almacenarPosTerm;
+        /**
+         * @brief Actualiza los atributos ficheroStopWords y stopWords
+         * @return true Si la lectura es correcta
+         * @return false Si el fichero no existe
+         */
+        bool leer_fichero_stopwords(const std::string&);
     public:
         IndexadorHash(const std::string& fichStopWords, const std::string& delimitadores,
                       const bool& detectComp, const bool& minuscSinAcentos, const std::string&

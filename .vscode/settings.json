@@ -1,5 +1,13 @@
 {
     "files.associations": {
         "unordered_map": "cpp"
+    },
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        "**/*.o" : true
     }
 }
