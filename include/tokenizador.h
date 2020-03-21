@@ -13,7 +13,6 @@ class Tokenizador
         static const bool PASAR_MINUSC_DEFAULT;
         static const std::string DEFAULT_DELIMITERS;
         static const std::string DEFAULT_FILELIST_FILENAME;
-        static bool is_dir(const std::string&);
         std::string delimiters;
         //delimiters_set[i] = 1 si el caracter i es delimitador. De lo contrario, 0.        
         short delimiters_set[256] = {0};
@@ -24,6 +23,7 @@ class Tokenizador
         void Tokenizar_especial(const char*, const size_t, std::list<std::string>&);
         void Tokenizar_fichero(const char*, char*, const size_t);
     public:
+        static bool is_dir(const std::string&);
         static bool file_exists(const std::string&);
         static void minusc_sin_acentos(std::string&);
         static const short MAPA_ACENTOS[256];

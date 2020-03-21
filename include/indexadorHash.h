@@ -12,6 +12,7 @@ class IndexadorHash
 {
     friend std::ostream& operator<<(std::ostream&, const IndexadorHash&);
     private:
+        static std::string NOMBRE_FICHERO_MAPA_INDICE;
         const size_t MAX_PATHNAME_LEN = 256;
         IndexadorHash();
         std::unordered_map<std::string, InformacionTermino> indice;
@@ -27,19 +28,25 @@ class IndexadorHash
         bool almacenarEnDisco;
         bool almacenarPosTerm;
         /**
+         * @brief Guarda la variable indice en el fichero
+         * 'directorioIndice/NOMBRE_FICHERO_MAPA_INDICE' con la siguiente estructura:
+         * STX + token + ETX
+         * 
+         */
+        void guardar_mapa_indice() const;
+        void copy_vals(const IndexadorHash&);
+        /**
          * @brief Actualiza los atributos ficheroStopWords y stopWords
          * @return true Si la lectura es correcta
          * @return false Si el fichero no existe
          */
-        bool leer_fichero_stopwords(const std::string&);
+        bool leer_fichero_stopwords(const std::string&, const bool);
     public:
-        IndexadorHash(const std::string& fichStopWords, const std::string& delimitadores,
-                      const bool& detectComp, const bool& minuscSinAcentos, const std::string&
-                      dirIndice, const int& tStemmer, const bool& almEnDisco, const bool&
-                      almPosTerm);
+        IndexadorHash(const std::string &fichStopWords, const std::string &delimitadores,
+                          const bool &detectComp, const bool &minuscSinAcentos, const std::string &dirIndice, const int &tStemmer, const bool &almEnDisco, const bool &almPosTerm);
         IndexadorHash(const std::string& directorioIndexacion);
-        IndexadorHash(const IndexadorHash&);
-        ~IndexadorHash();
+        IndexadorHash(const IndexadorHash& foo) {copy_vals(foo);}
+        ~IndexadorHash() {;}
         IndexadorHash& operator= (const IndexadorHash&);
         bool Indexar(const std::string& ficheroDocumentos);
         bool GuardarIndexacion() const;
