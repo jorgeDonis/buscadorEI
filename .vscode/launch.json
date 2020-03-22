@@ -7,7 +7,7 @@
         "name": "(gdb) Launch",
         "type": "cppdbg",
         "request": "launch",
-        "program": "${workspaceFolder}/practica1",
+        "program": "${workspaceFolder}/indexador",
         "args": [],
         "stopAtEntry": false,
         "cwd": "${workspaceFolder}",

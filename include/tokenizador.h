@@ -53,8 +53,7 @@ class Tokenizador
         }
         void Tokenizar(const char*, const size_t, std::list<std::string> &);
         void Tokenizar(const std::string&, std::list<std::string>&);
-        bool Tokenizar(const std::string&, const std::string&);
-        bool Tokenizar(const std::string&);
+        char* Tokenizar(const std::string&);
         bool TokenizarListaFicheros(const std::string&);
         bool TokenizarDirectorio(const std::string&);
 };

@@ -94,14 +94,14 @@ void InfDoc::copy_vals(const InfDoc& foo)
     this->tamBytes = foo.tamBytes;
 }
 
-InfDoc::InfDoc()
+InfDoc::InfDoc() : tokens()
 {
     idDoc = InfDoc::DOC_ID++;
     fechaModificacion = time(NULL);
     numPal = numPalDiferentes = numPalSinParada = tamBytes = 0;
 }
 
-InfDoc::InfDoc(const InfDoc& foo)
+InfDoc::InfDoc(const InfDoc& foo) : tokens(foo.tokens)
 {
     copy_vals(foo);
 }
@@ -114,6 +114,11 @@ InfDoc& InfDoc::operator=(const InfDoc& foo)
         copy_vals(foo);
     }
     return *this;
+}
+
+bool InfDoc::existe_token(const string& token) const
+{
+    return (tokens.find(token) != tokens.end());
 }
 
 ostream& operator<<(ostream& os, const InfColeccionDocs& icd)

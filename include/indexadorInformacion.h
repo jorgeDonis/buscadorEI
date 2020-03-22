@@ -3,11 +3,13 @@
 
 #include <iostream>
 #include <unordered_map>
+#include <unordered_set>
 #include <list>
-#include <unordered_map>
+
 
 class InfTermDoc
 {
+    friend class IndexadorHash;
     friend std::ostream& operator<<(std::ostream& s, const InfTermDoc& p);
     private:
         int ft;
@@ -22,6 +24,7 @@ class InfTermDoc
 
 class InformacionTermino
 {
+    friend class IndexadorHash;
     friend std::ostream& operator<<(std::ostream& s, const InformacionTermino& p);
     private:
         int ftc;
@@ -36,9 +39,11 @@ class InformacionTermino
 
 class InfDoc
 {
+    friend class IndexadorHash;
     static long int DOC_ID;
     friend std::ostream& operator<<(std::ostream&, const InfDoc&);
     private:
+        std::unordered_set<std::string> tokens;
         long int idDoc;
         int numPal;
         int numPalSinParada;
@@ -47,6 +52,7 @@ class InfDoc
         time_t fechaModificacion;
         void copy_vals(const InfDoc&);
     public:
+        bool existe_token(const std::string& token) const;
         InfDoc();
         InfDoc(const InfDoc&);
         ~InfDoc() {InfDoc::DOC_ID--;}
@@ -55,6 +61,7 @@ class InfDoc
 
 class InfColeccionDocs
 {
+    friend class IndexadorHash;
     friend std::ostream& operator<<(std::ostream&, const InfColeccionDocs&);
     private:
         long int numDocs;
@@ -71,6 +78,7 @@ class InfColeccionDocs
 
 class InformacionTerminoPregunta
 {
+    friend class IndexadorHash;
     friend std::ostream& operator<<(std::ostream&, const InformacionTerminoPregunta&);
     private:
         int ft;
@@ -85,6 +93,7 @@ class InformacionTerminoPregunta
 
 class InformacionPregunta
 {
+    friend class IndexadorHash;
     friend std::ostream& operator<<(std::ostream&, const InformacionPregunta&);
     private:
         long int numTotalPal;

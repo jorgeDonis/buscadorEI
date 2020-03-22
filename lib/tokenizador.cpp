@@ -228,48 +228,32 @@ void Tokenizador::Tokenizar(const string& str, list<string>& tokens)
             minusc_sin_acentos(token);
 }
 
-bool Tokenizador::Tokenizar(const string& input_filename, const string& output_filename)
+/**
+ * @brief Abre el fichero como mmap y tokeniza sobre memoria
+ * 
+ * @param input_filename Fichero sobre el que se hará mmap
+ * @return char* Tiene reservado tamaño igual que input_filename,
+ * Contiene tokens separados por \n y termina en \0 (fin de cadena).
+ * Tendrá que ser liberado en un futuro.
+ */
+char* Tokenizador::Tokenizar(const string& input_filename)
 {
     int ifd = open(input_filename.c_str(), O_RDONLY, (mode_t)0600);
     if (!ifd)
-    {
         cerr << "ERROR: error al leer el fichero" << input_filename << endl;
-        return false;
-    }
     struct stat fileInfo = {0};
     fstat(ifd, &fileInfo);
-    char *input_map = (char *)mmap(0, fileInfo.st_size, PROT_READ, MAP_SHARED, ifd, 0);
+    char* input_map = (char*) mmap(0, fileInfo.st_size, PROT_READ, MAP_SHARED, ifd, 0);
 
     size_t len = fileInfo.st_size + 1;
-    int ofd = open(output_filename.c_str(), O_RDWR | O_CREAT | O_TRUNC, (mode_t)0600);
-    if (!ofd)
-    {
-        cerr << "ERROR: error al crear el fichero" << output_filename << endl;
-        return false;   
-    }
-    lseek(ofd, len, SEEK_SET);
-    write(ofd, "", 1);
 
-    char *output_map = (char *)mmap(0, len, PROT_READ | PROT_WRITE, MAP_SHARED, ofd, 0);
+    char* output_map = new char[len];
 
     Tokenizar_fichero(input_map, output_map, len - 1);
 
-    if (msync(output_map, len, MS_SYNC) == -1)
-    {
-        cerr << "ERROR: no se pudo sincronizar con el disco" << endl;
-        return false;
-    }
-    munmap(output_map, len);
-    close(ofd);
     munmap((char *)input_map, fileInfo.st_size);
     close(ifd);
-    truncate(output_filename.c_str(), EstadoChar::iterador_salida - 1);
-    return true;
-}
-
-bool Tokenizador::Tokenizar(const string& i)
-{
-    return Tokenizar(i, i + ".tk");
+    return output_map;
 }
 
 bool Tokenizador::TokenizarListaFicheros(const string& i)
@@ -306,7 +290,6 @@ bool Tokenizador::TokenizarListaFicheros(const string& i)
 
 bool Tokenizador::TokenizarDirectorio(const string& i)
 {
-    //TODO fallo porque me coje el directorio raiz tambien como si fuera un fichero
     bool execution_is_right = true;
     if (!Tokenizador::file_exists(i))
     {
@@ -585,7 +568,10 @@ void Tokenizador::Tokenizar_fichero(const char* mapa_entrada, char* mapa_salida,
     EstadoChar estado(this, mapa_entrada, mapa_salida, len);
     while (true)
     {
-        estado.current_char = MAPA_ACENTOS[(unsigned char) mapa_entrada[estado.iterador_entrada_derecha]];
+        if (pasarAminuscSinAcentos)
+            estado.current_char = MAPA_ACENTOS[(unsigned char) mapa_entrada[estado.iterador_entrada_derecha]];
+        else
+            estado.current_char = mapa_entrada[estado.iterador_entrada_derecha];
         if (estado.iterador_entrada_derecha == len - 1)
         {
             if (estado.current_char == '$' || estado.current_char == '%')
@@ -595,11 +581,13 @@ void Tokenizador::Tokenizar_fichero(const char* mapa_entrada, char* mapa_salida,
                 estado.iterador_salida++;
                 estado.mapa_salida[estado.iterador_salida] = '\n';
                 estado.iterador_salida++;
+                mapa_salida[estado.iterador_salida] = '\0';
                 return;
             }
             if (is_delimiter(estado.current_char) && estado.estado != URL)
                 estado.iterador_entrada_derecha--;
             estado.escribir_token(estado.iterador_entrada_izquierda, estado.iterador_entrada_derecha);
+            mapa_salida[estado.iterador_salida] = '\0';
             return;
         }
         estado.siguiente();
@@ -619,7 +607,10 @@ void EstadoChar::escribir_token(const size_t inicio, const size_t final)
     {
         for (size_t i = inicio; i <= final; i++)
         {
-            mapa_salida[iterador_salida] = Tokenizador::MAPA_ACENTOS[(unsigned char) mapa_entrada[i]];
+            if (tokenizador->PasarAminuscSinAcentos())
+                mapa_salida[iterador_salida] = Tokenizador::MAPA_ACENTOS[(unsigned char) mapa_entrada[i]];
+            else
+                mapa_salida[iterador_salida] = mapa_entrada[i];
             iterador_salida++;
         }
         mapa_salida[iterador_salida] = '\n';
