@@ -28,7 +28,7 @@ class Tokenizador
         static void minusc_sin_acentos(std::string&);
         static const short MAPA_ACENTOS[256];
         Tokenizador();
-        ~Tokenizador();
+        ~Tokenizador() {;}
         Tokenizador(const std::string&, const bool&, const bool&);
         Tokenizador(const Tokenizador&);
         Tokenizador& operator=(const Tokenizador&);

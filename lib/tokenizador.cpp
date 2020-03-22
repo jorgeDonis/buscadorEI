@@ -122,10 +122,6 @@ Tokenizador::Tokenizador()
     pasarAminuscSinAcentos = Tokenizador::PASAR_MINUSC_DEFAULT;
 }
 
-Tokenizador::~Tokenizador()
-{
-    this->delimiters = "";
-}
 
 Tokenizador::Tokenizador(const string& delimitadoresPalabra, const bool& kCasosEspeciales,
                          const bool& minuscSinAcentos)
@@ -155,7 +151,10 @@ Tokenizador::Tokenizador(const Tokenizador& tokenizador)
 Tokenizador& Tokenizador::operator=(const Tokenizador& tokenizador)
 {
     if (this != &tokenizador)
+    {
+        this->~Tokenizador();
         copy_values(tokenizador);
+    }
     return *this;
 }
 

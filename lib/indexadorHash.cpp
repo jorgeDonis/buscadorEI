@@ -1,9 +1,10 @@
 #include "indexadorHash.h" 
 #include <fstream>
-#include "unistd.h"
+#include <unistd.h>
 #include <stdio.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <limits.h>
 
 using namespace std;
 
@@ -94,7 +95,7 @@ IndexadorHash::IndexadorHash(const std::string &fichStopWords, const std::string
     {
         if (dirIndice == "")
         {
-            char* wd;
+            char wd[PATH_MAX];
             getcwd(wd, MAX_PATHNAME_LEN);
             directorioIndice = wd;
         }
@@ -216,11 +217,10 @@ bool IndexadorHash::indexar_documento(InfDoc& infDoc, const string& nombreDoc)
         int posTerm = -1;
         char* tokens = tok.Tokenizar(nombreDoc);
         unsigned tokens_it = 0;
-        char token_char = tokens[0];
         while (tokens[tokens_it] != '\0')
         {
             string token = "";
-            while (tokens_it != '\n')
+            while (tokens[tokens_it] != '\n')
                 {
                     token += tokens[tokens_it];
                     tokens_it++;
@@ -238,7 +238,7 @@ bool IndexadorHash::indexar_documento(InfDoc& infDoc, const string& nombreDoc)
             actualizar_infdoc(token, infDoc);
             actualizar_indice(token, infDoc, posTerm);
         }
-        free(tokens);
+        delete[] tokens;
     }
     catch (bad_alloc& e)
     {
