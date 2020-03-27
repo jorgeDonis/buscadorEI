@@ -55,7 +55,7 @@ class InfDoc
         bool existe_token(const std::string& token) const;
         InfDoc();
         InfDoc(const InfDoc&);
-        ~InfDoc() {InfDoc::DOC_ID--;}
+        ~InfDoc() {;}
         InfDoc& operator=(const InfDoc&);
 };
 

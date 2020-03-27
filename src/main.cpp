@@ -2,11 +2,12 @@
 
 int main()
 {
-    Tokenizador tok;
+    Tokenizador tok; 
     tok.CasosEspeciales(true);
     tok.PasarAminuscSinAcentos(true);
     IndexadorHash indexador("stopwords.txt", " \n.\t,", true, true, "", 0, false, true);
     indexador.IndexarDirectorio("corpus_test");
+    cout << indexador << endl;
     return 0;
 }
 

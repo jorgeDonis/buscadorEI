@@ -152,7 +152,7 @@ void IndexadorHash::eliminar_doc(const string& nombreDoc)
 }
 
 /**
- * @brief Llamará a indexar_documento(InfDoc) con un nuevo InfDoc
+ * @brief Llamarï¿½ a indexar_documento(InfDoc) con un nuevo InfDoc
  * Registra una nueva fila en indiceDocs. 
  * 
  * @param nombreDoc Nombre del documento
@@ -166,7 +166,7 @@ bool IndexadorHash::indexar_documento(const string& nombreDoc)
     InfDoc infdoc;
     try
     {
-        it = indiceDocs.insert(make_pair(nombreDoc, infdoc));
+        it = indiceDocs.insert(pair<string, InfDoc>(nombreDoc, infdoc));
         informacionColeccionDocs.numDocs++;
     }
     catch (bad_alloc& e)
@@ -205,7 +205,7 @@ void IndexadorHash::actualizar_indice(const string& token, const InfDoc& infdoc,
 /**
  * @brief Tokeniza e indexa el documento. Actualiza informacionColeccionDocs
  * 
- * @param infDoc Información que será actualizada. El ID se mantiene.
+ * @param infDoc Informaciï¿½n que serï¿½ actualizada. El ID se mantiene.
  * @param nombreDoc Nombre del documento
  * @return true Sin fallos
  * @return false Falta de memoria al insertar en indice
@@ -215,6 +215,7 @@ bool IndexadorHash::indexar_documento(InfDoc& infDoc, const string& nombreDoc)
     try
     {
         int posTerm = -1;
+        
         char* tokens = tok.Tokenizar(nombreDoc);
         unsigned tokens_it = 0;
         while (tokens[tokens_it] != '\0')
@@ -228,9 +229,7 @@ bool IndexadorHash::indexar_documento(InfDoc& infDoc, const string& nombreDoc)
             stemmer.stemmer(token, tipoStemmer);
             tokens_it++;
             infDoc.numPal++;
-            infDoc.tamBytes += token.length();
             informacionColeccionDocs.numTotalPal++;
-            informacionColeccionDocs.tamBytes += token.length();
             posTerm++;
             if (stopWords.find(token) != stopWords.end())
                 continue;
@@ -238,6 +237,8 @@ bool IndexadorHash::indexar_documento(InfDoc& infDoc, const string& nombreDoc)
             actualizar_infdoc(token, infDoc);
             actualizar_indice(token, infDoc, posTerm);
         }
+        infDoc.tamBytes = tokens_it + 1;
+        informacionColeccionDocs.tamBytes += infDoc.tamBytes;
         delete[] tokens;
     }
     catch (bad_alloc& e)
