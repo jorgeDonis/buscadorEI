@@ -5,11 +5,34 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <limits.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <unistd.h>
+
 
 using namespace std;
 
 string IndexadorHash::NOMBRE_FICHERO_MAPA_INDICE = "indice.mapa";
 const string IndexadorHash::NOMBRE_LISTA_FICHEROS = ".ficheros_corpus.lista";
+
+size_t IndexadorHash::get_file_size(const string& filename)
+{
+    off_t file_size;
+    char *buffer;
+    struct stat stbuf;
+    int fd;
+
+    fd = open(filename.c_str(), O_RDONLY);
+    if (fd == -1)
+    {
+        cerr << "ERROR: no existe el fichero " << filename << endl;
+        return -1;
+    }
+    fstat(fd, &stbuf);
+    return stbuf.st_size;
+}
 
 time_t IndexadorHash::ultima_modificacion(const string& filename)
 {
@@ -132,6 +155,7 @@ bool IndexadorHash::GuardarIndexacion() const
 
 void IndexadorHash::eliminar_doc(const string& nombreDoc)
 {
+    list<string> tokens_vacios;
     long int ID = indiceDocs.find(nombreDoc)->second.idDoc;
     unordered_map<string, InformacionTermino>::iterator it;
     it = indice.begin();
@@ -141,14 +165,17 @@ void IndexadorHash::eliminar_doc(const string& nombreDoc)
         if (it_doc != it->second.l_docs.end())
         {
             it->second.ftc -= it_doc->second.ft;
+            if (!it->second.ftc)
+                tokens_vacios.push_back(it->first);
             informacionColeccionDocs.numTotalPal -= it_doc->second.ft;
-            informacionColeccionDocs.tamBytes -= it_doc->second.ft * it->first.length();
-            if (stopWords.find(it->first) != stopWords.end())
-                informacionColeccionDocs.numTotalPalSinParada -= it_doc->second.ft;
+            informacionColeccionDocs.numTotalPalSinParada -= it_doc->second.ft;
             it->second.l_docs.erase(ID);
         }
         it++;
     }
+    informacionColeccionDocs.tamBytes -= indiceDocs[nombreDoc].tamBytes;
+    for (const string& token : tokens_vacios)
+        indice.erase(token);
 }
 
 /**
@@ -237,7 +264,7 @@ bool IndexadorHash::indexar_documento(InfDoc& infDoc, const string& nombreDoc)
             actualizar_infdoc(token, infDoc);
             actualizar_indice(token, infDoc, posTerm);
         }
-        infDoc.tamBytes = tokens_it + 1;
+        infDoc.tamBytes = get_file_size(nombreDoc);
         informacionColeccionDocs.tamBytes += infDoc.tamBytes;
         delete[] tokens;
     }
@@ -261,12 +288,13 @@ bool IndexadorHash::Indexar(const string& ficheroDocumentos)
             if (iterador != indiceDocs.end())
             {
                 if (ultima_modificacion(nombreDoc) > iterador->second.fechaModificacion)
+                {
                     eliminar_doc(nombreDoc);
-                else
-                    continue;
-                indexar_documento(iterador->second, nombreDoc);
+                    indexar_documento(iterador->second, nombreDoc);
+                }
             }
-            indexar_documento(nombreDoc);
+            else
+                indexar_documento(nombreDoc);
         }
     }
     else

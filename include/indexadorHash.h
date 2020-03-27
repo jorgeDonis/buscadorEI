@@ -12,6 +12,7 @@ class IndexadorHash
 {
     friend std::ostream& operator<<(std::ostream&, const IndexadorHash&);
     private:
+        static size_t get_file_size(const std::string&);
         static std::string NOMBRE_FICHERO_MAPA_INDICE;
         const static std::string NOMBRE_LISTA_FICHEROS;
         const size_t MAX_PATHNAME_LEN = 256;
@@ -42,7 +43,7 @@ class IndexadorHash
          */
         bool leer_fichero_stopwords(const std::string&, const bool);
         /**
-         * @brief Elimina toda la información relacionada con el documento.
+         * @brief Elimina toda la informaciï¿½n relacionada con el documento.
          * Actualiza indice, iterando por todos
          * los tokens y reduciendo sus frecuencias. Actualiza informacionColeccionDoc
          */
