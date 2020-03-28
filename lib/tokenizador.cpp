@@ -843,7 +843,7 @@ void Tokenizador::Tokenizar_fichero_simple(const char* mapa_entrada, char* mapa_
         }
         while (!is_delimiter(c))
         {
-            mapa_salida[it_salida] = MAPA_ACENTOS[c];
+            mapa_salida[it_salida] = MAPA_ACENTOS[(unsigned char) c];
             it_salida++;
             it_entrada++;
             c = mapa_entrada[it_entrada];

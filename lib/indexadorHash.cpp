@@ -312,6 +312,7 @@ bool IndexadorHash::Indexar(const string& ficheroDocumentos)
             else
                 indexar_documento(nombreDoc);
         }
+        in_file.close();
     }
     else
     {
