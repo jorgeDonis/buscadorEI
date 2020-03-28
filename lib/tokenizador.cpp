@@ -251,7 +251,7 @@ char* Tokenizador::Tokenizar(const string& input_filename)
     if (casosEspeciales)
         Tokenizar_fichero_especial(input_map, output_map, len - 1);
     else
-        // Tokenizar_fichero_simple(input_map, output_map, len - 1);
+        Tokenizar_fichero_simple(input_map, output_map, len - 1);
 
     munmap((char *)input_map, fileInfo.st_size);
     close(ifd);
@@ -833,8 +833,25 @@ void Tokenizador::Tokenizar_fichero_simple(const char* mapa_entrada, char* mapa_
 {
     size_t it_entrada, it_salida;
     it_entrada = it_salida = 0;
+    char c = mapa_entrada[0];
     while (it_entrada < len)
     {
+        while (is_delimiter(c))
+        {
+            it_entrada++;
+            c = mapa_entrada[it_entrada];
+        }
+        while (!is_delimiter(c))
+        {
+            mapa_salida[it_salida] = MAPA_ACENTOS[c];
+            it_salida++;
+            it_entrada++;
+            c = mapa_entrada[it_entrada];
+        }
+        mapa_salida[it_salida] = '\n';
+        it_salida++;
         it_entrada++;
+        c = mapa_entrada[it_entrada];
     }
+    mapa_salida[it_salida] = '\0';
 }
