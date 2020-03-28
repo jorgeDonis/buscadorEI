@@ -9,8 +9,7 @@ ostream& operator<<(ostream& s, const InfTermDoc& p)
 {
     s << "ft: " << p.ft;
     for (const int pos : p.posTerm)
-        s << pos << "\t";
-    s << "\b";
+        s << "\t" << pos;
     return s;
 }
 
