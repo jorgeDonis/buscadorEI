@@ -834,7 +834,7 @@ void Tokenizador::Tokenizar_fichero_simple(const char* mapa_entrada, char* mapa_
     size_t it_entrada, it_salida;
     it_entrada = it_salida = 0;
     char c = mapa_entrada[0];
-    while (it_entrada < len)
+    while (it_entrada < len - 1)
     {
         while (is_delimiter(c))
         {
