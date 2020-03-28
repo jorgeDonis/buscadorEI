@@ -140,6 +140,23 @@ IndexadorHash& IndexadorHash::operator=(const IndexadorHash& foo)
     return *this;
 }
 
+void IndexadorHash::ImprimirIndexacion() const
+{
+    cout << "Terminos indexados: " << endl;
+    unordered_map<string, InformacionTermino>::const_iterator it = indice.begin();
+    while (it != indice.end())
+    {
+        cout << it->first << "\t" << it->second << endl;
+        it++;
+    }
+    unordered_map<string, InfDoc>::const_iterator it_doc = indiceDocs.begin();
+    while (it_doc != indiceDocs.end())
+    {
+        cout << it_doc->first << "\t" << it_doc->second << endl;
+        it_doc++;
+    }
+}
+
 bool IndexadorHash::GuardarIndexacion() const
 {
     if (!Tokenizador::is_dir(directorioIndice))
@@ -242,7 +259,6 @@ bool IndexadorHash::indexar_documento(InfDoc& infDoc, const string& nombreDoc)
     try
     {
         int posTerm = -1;
-        
         char* tokens = tok.Tokenizar(nombreDoc);
         unsigned tokens_it = 0;
         while (tokens[tokens_it] != '\0')
@@ -321,3 +337,5 @@ bool IndexadorHash::IndexarDirectorio(const string& directorio)
     system(cmd.c_str());
     return Indexar(IndexadorHash::NOMBRE_LISTA_FICHEROS);
 }
+
+

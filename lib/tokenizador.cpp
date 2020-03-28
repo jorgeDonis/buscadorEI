@@ -248,7 +248,10 @@ char* Tokenizador::Tokenizar(const string& input_filename)
 
     char* output_map = new char[len];
 
-    Tokenizar_fichero(input_map, output_map, len - 1);
+    if (casosEspeciales)
+        Tokenizar_fichero_especial(input_map, output_map, len - 1);
+    else
+        // Tokenizar_fichero_simple(input_map, output_map, len - 1);
 
     munmap((char *)input_map, fileInfo.st_size);
     close(ifd);
@@ -562,7 +565,7 @@ void Estado::siguiente(string& token)
 //VERSION QUE USA PUNTEROS (para ficheros) Y NO USA REPRESENTACIONES INTERMEDIAS
 //
 
-void Tokenizador::Tokenizar_fichero(const char* mapa_entrada, char* mapa_salida, const size_t len)
+void Tokenizador::Tokenizar_fichero_especial(const char* mapa_entrada, char* mapa_salida, const size_t len)
 {
     EstadoChar estado(this, mapa_entrada, mapa_salida, len);
     while (true)

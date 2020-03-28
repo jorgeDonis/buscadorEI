@@ -63,6 +63,7 @@ class IndexadorHash
         bool IndexarPregunta(const std::string& preg);
         bool DevuelvePregunta(std::string& preg) const;
         bool DevuelvePregunta(InformacionPregunta& inf) const;
+        void ImprimirIndexacion() const;
         void ImprimirIndexacionPregunta();
         void ImprimirPregunta();
         bool Devuelve(const std::string& word, InformacionTermino& inf) const;

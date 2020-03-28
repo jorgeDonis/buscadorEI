@@ -21,7 +21,9 @@ class Tokenizador
         void copy_values(const Tokenizador&);
         //para cuando casosEspeciales == true
         void Tokenizar_especial(const char*, const size_t, std::list<std::string>&);
-        void Tokenizar_fichero(const char*, char*, const size_t);
+        void Tokenizar_fichero_especial(const char*, char*, const size_t);
+        void Tokenizar_fichero_simple(const char *, char *, const size_t);
+
     public:
         static bool is_dir(const std::string&);
         static bool file_exists(const std::string&);

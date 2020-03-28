@@ -89,8 +89,8 @@ void InfDoc::copy_vals(const InfDoc& foo)
     this->fechaModificacion = foo.fechaModificacion;
     this->idDoc = foo.idDoc;
     this->numPal = foo.numPal;
-    this->numPalDiferentes = numPalDiferentes;
-    this->numPalSinParada = numPalSinParada;
+    this->numPalDiferentes = foo.numPalDiferentes;
+    this->numPalSinParada = foo.numPalSinParada;
     this->tamBytes = foo.tamBytes;
 }
 
