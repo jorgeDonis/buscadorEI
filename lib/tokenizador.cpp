@@ -217,6 +217,26 @@ char* Tokenizador::TokenizarFichero(const string& input_filename)
     return output_map;
 }
 
+/**
+ * @brief Reserva memoria equivalente a la longitud del string y llama
+ * a las mismas funciones que tokenizan ficheros
+ * 
+ * @param str String a tokenizar
+ * @return char* sigue el mismo formato que TokenizarFichero(str). Tiene que ser liberado
+ * posteriormente
+ */
+
+char* Tokenizador::TokenizarString(const string& str)
+{
+    char* output_map = new char[str.size()];
+    if (casosEspeciales)
+        Tokenizar_fichero_especial(str.c_str(), output_map, str.size());
+    else
+        Tokenizar_fichero_simple(str.c_str(), output_map, str.size());
+
+    return output_map;
+}
+
 bool Estado::es_decimal(const char c)
 {
     return (c >= 48 && c <= 57);

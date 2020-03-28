@@ -22,6 +22,7 @@ class IndexadorHash
         InfColeccionDocs informacionColeccionDocs;
         std::string pregunta;
         std::unordered_map<std::string, InformacionTerminoPregunta> indicePregunta;
+        InformacionPregunta infPregunta;
         std::unordered_set<std::string> stopWords;
         std::string ficheroStopWords;
         Tokenizador tok;
@@ -30,6 +31,7 @@ class IndexadorHash
         stemmerPorter stemmer;
         bool almacenarEnDisco;
         bool almacenarPosTerm;
+        void actualizar_indice_pregunta(const std::string&, size_t);
         void actualizar_infdoc(const string& token, InfDoc& infdoc);
         void actualizar_indice(const string& token, const InfDoc&, int);
         bool indexar_documento(const string&);
@@ -60,12 +62,12 @@ class IndexadorHash
         bool IndexarDirectorio(const std::string&);
         bool GuardarIndexacion() const;
         bool RecuperarIndexacion (const std::string& directorioIndexacion);
-        bool IndexarPregunta(const std::string& preg);
+        bool IndexarPregunta(const std::string&);
         bool DevuelvePregunta(std::string& preg) const;
         bool DevuelvePregunta(InformacionPregunta& inf) const;
         void ImprimirIndexacion() const;
-        void ImprimirIndexacionPregunta();
-        void ImprimirPregunta();
+        void ImprimirIndexacionPregunta() const;
+        void ImprimirPregunta() const;
         bool Devuelve(const std::string& word, InformacionTermino& inf) const;
         bool Devuelve(const std::string& word, const std::string& nomDoc, InfTermDoc& InfDoc) const;
         bool Existe(const std::string& word) const;

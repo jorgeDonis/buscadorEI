@@ -54,7 +54,7 @@ ostream& operator<<(ostream& os, const IndexadorHash& index)
 }
 
 IndexadorHash::IndexadorHash() : indice(), indiceDocs(), indicePregunta(), stopWords(), 
-                                 informacionColeccionDocs(), tok(), stemmer()
+                                 informacionColeccionDocs(), tok(), stemmer(), infPregunta()
 {
     pregunta = "";
     ficheroStopWords = "";
@@ -112,7 +112,7 @@ IndexadorHash::IndexadorHash(const std::string &fichStopWords, const std::string
                              const bool &detectComp, const bool &minuscSinAcentos, const std::string &dirIndice,
                              const int &tStemmer, const bool &almEnDisco, const bool &almPosTerm)
                              : indice(), indicePregunta(), stopWords(), informacionColeccionDocs(), tok(delimitadores, detectComp, minuscSinAcentos)
-                             , stemmer(), indiceDocs()
+                             , stemmer(), indiceDocs(), infPregunta()
 {
     if (leer_fichero_stopwords(fichStopWords, minuscSinAcentos))
     {
@@ -339,4 +339,84 @@ bool IndexadorHash::IndexarDirectorio(const string& directorio)
     return Indexar(IndexadorHash::NOMBRE_LISTA_FICHEROS);
 }
 
+/**
+ * @brief Intenta insertar en la tabla indicePregunta [token, infTerminoPregunta]
+ * 
+ * @param token Insertado
+ * @param pos Posición del token en la pregunta. Será necesario si almacenarPosTerm = true
+ */
+void IndexadorHash::actualizar_indice_pregunta(const string& token, size_t pos)
+{
+    unordered_map<string, InformacionTerminoPregunta>::iterator it;
+    it = indicePregunta.find(token);
+    if (it == indicePregunta.end())
+    {
+        infPregunta.numTotalPalDiferentes++;
+        indicePregunta.emplace(token, InformacionTerminoPregunta());
+    }
+    indicePregunta[token].ft++;
+    if (almacenarPosTerm)
+        indicePregunta[token].posTerm.push_back(pos);
+}
+
+/**
+ * @brief Actualiza pregunta, indicePregunta e infPregunta
+ * 
+ * @param pregunta 
+ * @return true 
+ * @return false si falta memoria
+ */
+bool IndexadorHash::IndexarPregunta(const string& pregunta)
+{
+    this->pregunta = pregunta;
+    try
+    {
+        int posTerm = -1;
+        char* tokens = tok.TokenizarString(pregunta + "\n");
+        unsigned tokens_it = 0;
+        while (tokens[tokens_it] != '\0')
+        {
+            string token = "";
+            while (tokens[tokens_it] != '\n')
+                {
+                    token += tokens[tokens_it];
+                    tokens_it++;
+                }
+            stemmer.stemmer(token, tipoStemmer);
+            tokens_it++;
+            infPregunta.numTotalPal++;
+            posTerm++;
+            if (stopWords.find(token) != stopWords.end())
+                continue;
+            infPregunta.numTotalPalSinParada++;
+            actualizar_indice_pregunta(token, posTerm);
+        }
+        delete[] tokens;
+    }
+    catch (bad_alloc& e)
+    {
+        cerr << "ERROR: falta de memoria al indexar la pregunta" << endl;
+        return false;
+    }
+    return true;
+}
+
+void IndexadorHash::ImprimirPregunta() const
+{
+    cout << "Pregunta indexada: " << pregunta << endl;
+    cout << "Informacion de la pregunta: " << infPregunta << endl;
+}
+
+void IndexadorHash::ImprimirIndexacionPregunta() const
+{
+    cout << "Pregunta indexada: " << pregunta << endl;
+    cout << "Terminos indexados en la pregunta: " << endl;
+    unordered_map<string, InformacionTerminoPregunta>::const_iterator it = indicePregunta.begin();
+    while (it != indicePregunta.end())
+    {
+        cout << it->first << "\t" << it->second << endl;
+        it++;
+    }
+    cout << "Informacion de la pregunta: " << infPregunta << endl;
+}
 

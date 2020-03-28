@@ -52,6 +52,7 @@ class Tokenizador
             return pasarAminuscSinAcentos;
         }
         char* TokenizarFichero(const std::string&);
+        char* TokenizarString(const std::string&);
 };
 
 enum Estados {_default, URL, decimal, email, acronimo, multipalabra, pctg, dollar};

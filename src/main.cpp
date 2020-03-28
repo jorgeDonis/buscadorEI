@@ -6,9 +6,8 @@ int main()
     tok.CasosEspeciales(true);
     tok.PasarAminuscSinAcentos(true);
     IndexadorHash indexador("stopwords.txt", " \n.\t,-", false, true, "", 0, false, true);
-    indexador.IndexarDirectorio("corpus_test");
-    cout << indexador << endl;
-    indexador.ImprimirIndexacion();
+    indexador.IndexarPregunta("es a pregunta buena buena buenísima genial");
+    indexador.ImprimirIndexacionPregunta();
     return 0;
 }
 

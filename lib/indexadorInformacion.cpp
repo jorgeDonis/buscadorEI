@@ -158,8 +158,7 @@ ostream& operator<<(ostream& os, const InformacionTerminoPregunta& itp)
 {
     os << "ft: " << itp.ft;
     for (const int pos : itp.posTerm)
-        os << pos << "\t";
-    os << "\b";
+        os << "\t" << pos;
     return os;
 }
 
@@ -183,7 +182,7 @@ InformacionTerminoPregunta& InformacionTerminoPregunta::operator=(const Informac
 ostream& operator<<(ostream& os, const InformacionPregunta& ip)
 {
     os << "numTotalPal: " << ip.numTotalPal << "\tnumTotalPalSinParada: " << ip.numTotalPalSinParada <<
-    "\numTotalPalDiferentes: " << ip.numTotalPalDiferentes;
+    "\t numTotalPalDiferentes: " << ip.numTotalPalDiferentes;
     return os;
 }
 
