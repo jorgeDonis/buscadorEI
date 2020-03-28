@@ -19,8 +19,6 @@ class Tokenizador
         bool casosEspeciales;
         bool pasarAminuscSinAcentos;
         void copy_values(const Tokenizador&);
-        //para cuando casosEspeciales == true
-        void Tokenizar_especial(const char*, const size_t, std::list<std::string>&);
         void Tokenizar_fichero_especial(const char*, char*, const size_t);
         void Tokenizar_fichero_simple(const char *, char *, const size_t);
 
@@ -53,49 +51,11 @@ class Tokenizador
         {
             return pasarAminuscSinAcentos;
         }
-        void Tokenizar(const char*, const size_t, std::list<std::string> &);
-        void Tokenizar(const std::string&, std::list<std::string>&);
-        char* Tokenizar(const std::string&);
-        bool TokenizarListaFicheros(const std::string&);
-        bool TokenizarDirectorio(const std::string&);
+        char* TokenizarFichero(const std::string&);
 };
 
 enum Estados {_default, URL, decimal, email, acronimo, multipalabra, pctg, dollar};
 enum EspecialesActivos {URL_ac, decimal_ac, email_ac, acronimo_ac, multipalabra_ac};
-
-//Representa el estado dentro de la m�quina de estados finitos
-class Estado
-{
-    private:
-        bool char_not_surround(const char &) const;
-        bool es_URL(const std::string&) const;
-        bool es_decimal(const std::string&) const;
-        bool es_email(const std::string&) const;
-        bool es_acronimo() const;
-        bool es_multipalabra() const;
-        bool casos_activos[5] = { false };
-    public:
-        static bool es_decimal(const char);
-        static const short DEFAULT_CHARS[256];
-        static const std::string URL_ALLOWED_DELI;
-        char current_char;
-        void set_casos_activos();
-        Tokenizador* tokenizador;
-        const char* full_str;
-        size_t str_len;
-        size_t absolute_iterator;
-        std::list<std::string>& tokens;
-        Estados estado;
-        Estado(const char* str, std::list<std::string>& tk, Tokenizador* tok) : estado(_default), tokens(tk){
-            tokenizador = tok;
-            set_casos_activos();
-            full_str = str;
-            absolute_iterator = 0;
-        }
-        void siguiente(std::string&);
-        void siguiente_default(std::string&);
-        void siguiente_decimal(std::string&);
-};
 
 
 //Igual que Estado, pero no usa lista de tokens ni string
@@ -134,6 +94,15 @@ public:
     void siguiente();
     void siguiente_default();
     void siguiente_decimal();
+};
+
+//Representa el estado dentro de la m?quina de estados finitos
+class Estado
+{
+    public:
+        static bool es_decimal(const char);
+        static const short DEFAULT_CHARS[256];
+        static const std::string URL_ALLOWED_DELI;
 };
 
 #endif

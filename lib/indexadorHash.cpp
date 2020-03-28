@@ -259,7 +259,7 @@ bool IndexadorHash::indexar_documento(InfDoc& infDoc, const string& nombreDoc)
     try
     {
         int posTerm = -1;
-        char* tokens = tok.Tokenizar(nombreDoc);
+        char* tokens = tok.TokenizarFichero(nombreDoc);
         unsigned tokens_it = 0;
         while (tokens[tokens_it] != '\0')
         {
