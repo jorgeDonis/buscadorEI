@@ -230,10 +230,10 @@ void Tokenizador::Tokenizar(const string& str, list<string>& tokens)
 /**
  * @brief Abre el fichero como mmap y tokeniza sobre memoria
  * 
- * @param input_filename Fichero sobre el que se hará mmap
- * @return char* Tiene reservado tamaño igual que input_filename,
+ * @param input_filename Fichero sobre el que se harï¿½ mmap
+ * @return char* Tiene reservado tamaï¿½o igual que input_filename,
  * Contiene tokens separados por \n y termina en \0 (fin de cadena).
- * Tendrá que ser liberado en un futuro.
+ * Tendrï¿½ que ser liberado en un futuro.
  */
 char* Tokenizador::Tokenizar(const string& input_filename)
 {
@@ -826,5 +826,15 @@ void EstadoChar::siguiente()
     case dollar:
         siguiente_default();
         break;
+    }
+}
+
+void Tokenizador::Tokenizar_fichero_simple(const char* mapa_entrada, char* mapa_salida, const size_t len)
+{
+    size_t it_entrada, it_salida;
+    it_entrada = it_salida = 0;
+    while (it_entrada < len)
+    {
+        it_entrada++;
     }
 }
