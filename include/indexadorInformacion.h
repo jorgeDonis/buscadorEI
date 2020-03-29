@@ -43,7 +43,6 @@ class InfDoc
     static long int DOC_ID;
     friend std::ostream& operator<<(std::ostream&, const InfDoc&);
     private:
-        std::unordered_set<std::string> tokens;
         long int idDoc;
         int numPal;
         int numPalSinParada;
@@ -52,7 +51,6 @@ class InfDoc
         time_t fechaModificacion;
         void copy_vals(const InfDoc&);
     public:
-        bool existe_token(const std::string& token) const;
         InfDoc();
         InfDoc(const InfDoc&);
         ~InfDoc() {;}
