@@ -343,7 +343,7 @@ bool IndexadorHash::IndexarDirectorio(const string& directorio)
  * @brief Intenta insertar en la tabla indicePregunta [token, infTerminoPregunta]
  * 
  * @param token Insertado
- * @param pos Posición del token en la pregunta. Será necesario si almacenarPosTerm = true
+ * @param pos Posiciï¿½n del token en la pregunta. Serï¿½ necesario si almacenarPosTerm = true
  */
 void IndexadorHash::actualizar_indice_pregunta(const string& token, size_t pos)
 {
@@ -420,3 +420,131 @@ void IndexadorHash::ImprimirIndexacionPregunta() const
     cout << "Informacion de la pregunta: " << infPregunta << endl;
 }
 
+bool IndexadorHash::DevuelvePregunta(string& preg) const
+{
+    if (indice.size() > 0)
+    {
+        preg = pregunta;
+        return true;
+    }
+    return false;
+}
+
+bool IndexadorHash::DevuelvePregunta(const string& word, InformacionTerminoPregunta& inf)
+{
+    string word_minusc = word;
+    Tokenizador::minusc_sin_acentos(word_minusc);
+    stemmer.stemmer(word_minusc, tipoStemmer);
+    unordered_map<string, InformacionTerminoPregunta>::const_iterator it;
+    it = indicePregunta.find(word_minusc);
+    if (it == indicePregunta.end())
+        return false;
+    else
+        inf = it->second;
+    return true;
+}
+
+bool IndexadorHash::DevuelvePregunta(InformacionPregunta& inf) const
+{
+    if (indice.size() > 0)
+    {
+        inf = infPregunta;
+        return true;
+    }
+    return false;
+}
+
+bool IndexadorHash::Devuelve(const string& word, InformacionTermino& inf)
+{
+    string word_minusc = word;
+    Tokenizador::minusc_sin_acentos(word_minusc);
+    stemmer.stemmer(word_minusc, tipoStemmer);
+    unordered_map<string, InformacionTermino>::const_iterator it;
+    it = indice.find(word_minusc);
+    if (it == indice.end())
+        return false;
+    else
+        inf = it->second;
+    return true;
+}
+
+bool IndexadorHash::Devuelve(const string& word, const string& nomDoc, InfTermDoc& infDoc)
+{
+    string word_minusc = word;
+    Tokenizador::minusc_sin_acentos(word_minusc);
+    stemmer.stemmer(word_minusc, tipoStemmer);
+    unordered_map<string, InformacionTermino>::const_iterator it;
+    it = indice.find(word_minusc);
+    if (it == indice.end())
+        return false;
+    else
+    {
+        unordered_map<string, InfDoc>::const_iterator doc_it;
+        doc_it = indiceDocs.find(nomDoc);
+        if (doc_it == indiceDocs.end())
+            return false;
+        long ID = doc_it->second.idDoc;
+        unordered_map<long, InfTermDoc>::const_iterator term_doc_it;
+        term_doc_it = it->second.l_docs.find(ID);
+        if (term_doc_it == it->second.l_docs.end())
+            return false;
+        infDoc = term_doc_it->second;
+    }
+    return true;
+}
+
+bool IndexadorHash::Existe(const std::string &word)
+{
+    string word_minusc = word;
+    Tokenizador::minusc_sin_acentos(word_minusc);
+    stemmer.stemmer(word_minusc, tipoStemmer);
+    return indice.find(word_minusc) != indice.end();
+}
+
+bool IndexadorHash::Borra(const std::string &word)
+{
+    string word_minusc = word;
+    Tokenizador::minusc_sin_acentos(word_minusc);
+    stemmer.stemmer(word_minusc, tipoStemmer);
+    unordered_map<string, InformacionTermino>::const_iterator it;
+    it = indice.find(word_minusc);
+    if (it == indice.end())
+        return false;
+    indice.erase(it);
+    return true;
+}
+
+bool IndexadorHash::BorraDoc(const std::string &nomDoc)
+{
+    unordered_map<string, InfDoc>::const_iterator it = indiceDocs.find(nomDoc);
+    if (it == indiceDocs.end())
+        return false;
+    indiceDocs.erase(it);
+    return true;
+}
+
+bool IndexadorHash::Actualiza(const std::string &word, const InformacionTermino &inf)
+{
+    string word_minusc = word;
+    Tokenizador::minusc_sin_acentos(word_minusc);
+    stemmer.stemmer(word_minusc, tipoStemmer);
+    unordered_map<string, InformacionTermino>::const_iterator it;
+    it = indice.find(word_minusc);
+    if (it == indice.end())
+        return false;
+    indice[word_minusc] = inf;
+    return true;
+}
+
+bool IndexadorHash::Inserta(const std::string &word, const InformacionTermino &inf)
+{
+    string word_minusc = word;
+    Tokenizador::minusc_sin_acentos(word_minusc);
+    stemmer.stemmer(word_minusc, tipoStemmer);
+    unordered_map<string, InformacionTermino>::const_iterator it;
+    it = indice.find(word_minusc);
+    if (it != indice.end())
+        return false;
+    indice[word_minusc] = inf;
+    return true;
+}

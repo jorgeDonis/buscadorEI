@@ -64,17 +64,18 @@ class IndexadorHash
         bool RecuperarIndexacion (const std::string& directorioIndexacion);
         bool IndexarPregunta(const std::string&);
         bool DevuelvePregunta(std::string& preg) const;
+        bool DevuelvePregunta(const std::string&, InformacionTerminoPregunta&);
         bool DevuelvePregunta(InformacionPregunta& inf) const;
         void ImprimirIndexacion() const;
         void ImprimirIndexacionPregunta() const;
         void ImprimirPregunta() const;
-        bool Devuelve(const std::string& word, InformacionTermino& inf) const;
-        bool Devuelve(const std::string& word, const std::string& nomDoc, InfTermDoc& InfDoc) const;
-        bool Existe(const std::string& word) const;
+        bool Devuelve(const std::string& word, InformacionTermino& inf);
+        bool Devuelve(const std::string& word, const std::string& nomDoc, InfTermDoc& InfDoc);
+        bool Existe(const std::string& word);
         bool Borra(const std::string& word);
         bool BorraDoc(const std::string& nomDoc);
-        void VaciarIndiceDocs();
-        void VaciarIndicePreg();
+        void VaciarIndiceDocs() {indiceDocs.clear();}
+        void VaciarIndicePreg() {indicePregunta.clear();}
         bool Actualiza(const std::string& word, const InformacionTermino& inf);
         bool Inserta(const std::string& word, const InformacionTermino& inf);
         int NumPalIndexadas() const;
