@@ -224,8 +224,6 @@ bool IndexadorHash::indexar_documento(const string& nombreDoc)
 void IndexadorHash::actualizar_infdoc(const string& token, InfDoc& infdoc)
 {
     infdoc.numPalSinParada++;
-    unordered_map<string, InformacionTermino>::const_iterator it;
-    it = indice.find(token);
     unordered_map<long, InfTermDoc>::const_iterator it_doc;
     it_doc = it->second.l_docs.find(infdoc.idDoc);
     if (it_doc == it->second.l_docs.end())
@@ -278,8 +276,8 @@ bool IndexadorHash::indexar_documento(InfDoc& infDoc, const string& nombreDoc)
             if (stopWords.find(token) != stopWords.end())
                 continue;
             informacionColeccionDocs.numTotalPalSinParada++;
-            actualizar_indice(token, infDoc, posTerm);
             actualizar_infdoc(token, infDoc);
+            actualizar_indice(token, infDoc, posTerm);
         }
         infDoc.tamBytes = get_file_size(nombreDoc);
         informacionColeccionDocs.tamBytes += infDoc.tamBytes;
@@ -577,5 +575,5 @@ void IndexadorHash::ListarTerminos() const
 
 bool IndexadorHash::ListarTerminos(const std::string &nomDoc) const
 {
-    
+
 }
