@@ -32,8 +32,7 @@ class IndexadorHash
         bool almacenarEnDisco;
         bool almacenarPosTerm;
         void actualizar_indice_pregunta(const std::string&, size_t);
-        void actualizar_infdoc(const string& token, InfDoc& infdoc);
-        void actualizar_indice(const string& token, const InfDoc&, int);
+        void actualizar_indice(const string& token, InfDoc&, int);
         bool indexar_documento(const string&);
         bool indexar_documento(InfDoc&, const string&);
         void guardar_mapa_indice() const; //TODO
@@ -92,7 +91,12 @@ class IndexadorHash
         void ListarInfColeccDocs() const {cout << informacionColeccionDocs << endl;}
         void ListarTerminos() const;
         bool ListarTerminos(const std::string& nomDoc) const;
-        void ListarDocs() const;
+        void ListarDocs() const
+        {
+            for (unordered_map<string, InfDoc>::const_iterator it;
+                it != indiceDocs.end(); ++it)
+                cout << it->first << "\t" << it->second << endl;
+        }
         bool ListarDocs(const std::string& nomDoc) const;
 };
 

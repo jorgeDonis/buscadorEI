@@ -221,28 +221,25 @@ bool IndexadorHash::indexar_documento(const string& nombreDoc)
     return indexar_documento(it.first->second, nombreDoc);
 }
 
-void IndexadorHash::actualizar_infdoc(const string& token, InfDoc& infdoc)
+void IndexadorHash::actualizar_indice(const string& token, InfDoc& infdoc, int posTerm)
 {
     infdoc.numPalSinParada++;
-    unordered_map<long, InfTermDoc>::const_iterator it_doc;
-    it_doc = it->second.l_docs.find(infdoc.idDoc);
-    if (it_doc == it->second.l_docs.end())
-        infdoc.numPalDiferentes++;
-}
-
-void IndexadorHash::actualizar_indice(const string& token, const InfDoc& infdoc, int posTerm)
-{
     unordered_map<string, InformacionTermino>::iterator it;
     it = indice.find(token);
     if (it == indice.end())
+        it = indice.emplace(token, InformacionTermino()).first;
+    it->second.ftc++;
+
+    unordered_map<long, InfTermDoc>::iterator it_doc;
+    it_doc = it->second.l_docs.find(infdoc.idDoc);
+    if (it_doc == it->second.l_docs.end())
     {
-        informacionColeccionDocs.numTotalPalDiferentes++;
-        indice.emplace(token, InformacionTermino());
+        infdoc.numPalDiferentes++;
+        it_doc = it->second.l_docs.emplace(infdoc.idDoc, InfTermDoc()).first;
     }
-    indice[token].ftc++;
-    indice[token].l_docs[infdoc.idDoc].ft++;
+    it_doc->second.ft++;
     if (almacenarPosTerm)
-        indice[token].l_docs[infdoc.idDoc].posTerm.push_back(posTerm);
+        it_doc->second.posTerm.push_back(posTerm);
 }
 
 /**
@@ -271,16 +268,16 @@ bool IndexadorHash::indexar_documento(InfDoc& infDoc, const string& nombreDoc)
             stemmer.stemmer(token, tipoStemmer);
             tokens_it++;
             infDoc.numPal++;
-            informacionColeccionDocs.numTotalPal++;
             posTerm++;
             if (stopWords.find(token) != stopWords.end())
                 continue;
             informacionColeccionDocs.numTotalPalSinParada++;
-            actualizar_infdoc(token, infDoc);
             actualizar_indice(token, infDoc, posTerm);
         }
         infDoc.tamBytes = get_file_size(nombreDoc);
         informacionColeccionDocs.tamBytes += infDoc.tamBytes;
+        informacionColeccionDocs.numTotalPal += infDoc.numPal;
+        informacionColeccionDocs.numTotalPalDiferentes += infDoc.numPalDiferentes;
         delete[] tokens;
     }
     catch (bad_alloc& e)
@@ -575,5 +572,26 @@ void IndexadorHash::ListarTerminos() const
 
 bool IndexadorHash::ListarTerminos(const std::string &nomDoc) const
 {
+    unordered_map<string, InfDoc>::const_iterator it;
+    it = indiceDocs.find(nomDoc);
+    if (it == indiceDocs.end())
+        return false;
+    long id_doc = it->second.idDoc;
+    for (unordered_map<string, InformacionTermino>::const_iterator it_ind = indice.begin();
+         it_ind != indice.end(); ++it_ind)
+    {
+        if (it_ind->second.l_docs.find(id_doc) != it_ind->second.l_docs.end())
+            cout << it_ind->first << "\t" << it_ind->second << endl;
+    }
+    return true;
+}
 
+bool IndexadorHash::ListarDocs(const std::string& nomDoc) const
+{
+    unordered_map<string, InfDoc>::const_iterator it;
+    it = indiceDocs.find(nomDoc);
+    if (it == indiceDocs.end())
+        return false;
+    cout << nomDoc << "\t" << it->second << endl;
+    return true;
 }
