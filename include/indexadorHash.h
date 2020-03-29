@@ -78,18 +78,18 @@ class IndexadorHash
         void VaciarIndicePreg() {indicePregunta.clear();}
         bool Actualiza(const std::string& word, const InformacionTermino& inf);
         bool Inserta(const std::string& word, const InformacionTermino& inf);
-        int NumPalIndexadas() const;
-        std::string DevolverFichPalParada () const;
+        int NumPalIndexadas() const {return indice.size();}
+        std::string DevolverFichPalParada () const {return ficheroStopWords;}
         void ListarPalParada() const;
-        int NumPalParada() const;
-        std::string DevolverDelimitadores () const;
-        bool DevolverCasosEspeciales () const;
-        bool DevolverPasarAminuscSinAcentos () const;
-        bool DevolverAlmacenarPosTerm () const;
-        std::string DevolverDirIndice () const;
-        int DevolverTipoStemming () const;
-        bool DevolverAlmEnDisco () const;
-        void ListarInfColeccDocs() const;
+        int NumPalParada() const {return stopWords.size();}
+        std::string DevolverDelimitadores () const {return tok.delimiters;}
+        bool DevolverCasosEspeciales () const {return tok.casosEspeciales;}
+        bool DevolverPasarAminuscSinAcentos () const {return tok.pasarAminuscSinAcentos;}
+        bool DevolverAlmacenarPosTerm () const {return almacenarPosTerm;}
+        std::string DevolverDirIndice () const {return directorioIndice;}
+        int DevolverTipoStemming () const {return tipoStemmer;}
+        bool DevolverAlmEnDisco () const {return almacenarEnDisco;}
+        void ListarInfColeccDocs() const {cout << informacionColeccionDocs << endl;}
         void ListarTerminos() const;
         bool ListarTerminos(const std::string& nomDoc) const;
         void ListarDocs() const;

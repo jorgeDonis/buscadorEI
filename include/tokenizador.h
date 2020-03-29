@@ -7,6 +7,7 @@
 
 class Tokenizador
 {
+    friend class IndexadorHash;
     friend std::ostream& operator<<(std::ostream&, const Tokenizador&);
     private:
         static const bool CASOS_ESPECIALES_DEFAULT;

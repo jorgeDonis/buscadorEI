@@ -548,3 +548,33 @@ bool IndexadorHash::Inserta(const std::string &word, const InformacionTermino &i
     indice[word_minusc] = inf;
     return true;
 }
+
+void IndexadorHash::ListarPalParada() const
+{
+    ifstream file(ficheroStopWords);
+    if (file.is_open())
+    {
+        string word;
+        while (getline(file, word))
+            cout << word << endl;
+        file.close();
+    }
+    else
+        cerr << "ERROR: no se pudo abrir el fichero de stopwords: " << ficheroStopWords << endl;
+}
+
+void IndexadorHash::ListarTerminos() const
+{
+    unordered_map<string, InformacionTermino>::const_iterator it;
+    it = indice.begin();
+    while (it != indice.end())
+    {
+        cout << it->first << "\t" << it->second << endl;
+        it++;
+    }
+}
+
+bool IndexadorHash::ListarTerminos(const std::string &nomDoc) const
+{
+    
+}
