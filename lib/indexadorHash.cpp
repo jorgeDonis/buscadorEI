@@ -632,7 +632,67 @@ bool IndexadorHash::ListarDocs(const std::string& nomDoc) const
     return true;
 }
 
-void GestorFicheros::guardar(const InfTermDoc& inftermdoc)
+/**
+ * @brief Guardará primero un int con ft, luego un unsigned long int con el tamaño en bytes
+ * de la lista y posteriormente todos los int de posTerm
+ * 
+ * @param inftermdoc 
+ */
+void GestorFicheros::guardar(const InfTermDoc& inftermdoc, ofstream& fichero_salida)
 {
-
+    fichero_salida.write((const char*) &inftermdoc.ft, sizeof(int));
+    unsigned long int pos_size = inftermdoc.posTerm.size() * sizeof(int);
+    fichero_salida.write((const char*) &pos_size, sizeof(unsigned long int));
+    int* posiciones = (int*) malloc(pos_size);
+    size_t i = 0;
+    for (const int& pos : inftermdoc.posTerm)
+    {
+        posiciones[i] = pos;
+        i++;
+    }
+    fichero_salida.write((const char*) posiciones, pos_size);
+    free(posiciones);
 }
+
+void GestorFicheros::leer(InfTermDoc& inftermdoc, ifstream& fichero_entrada)
+{
+    fichero_entrada.read((char*) &inftermdoc.ft, sizeof(int));
+    unsigned long int pos_size;
+    fichero_entrada.read((char*) &pos_size, sizeof(unsigned long int));
+    size_t pos_elements = pos_size / sizeof(int);
+    int* posiciones = (int*) malloc(pos_size);
+    fichero_entrada.read((char*) posiciones, pos_size);
+    for (size_t i = 0; i < pos_elements; i++)
+        inftermdoc.posTerm.push_back(posiciones[i]);
+    free(posiciones);
+}
+
+void GestorFicheros::guardar(const InformacionTermino& informaciontermino, ofstream& fichero_salida)
+{
+    fichero_salida.write((const char*) &informaciontermino.ftc, sizeof(int));
+    unsigned long int l_docs_size = informaciontermino.l_docs.size();
+    fichero_salida.write((const char*) &l_docs_size, sizeof(unsigned long int));
+    pair<long int, InfTermDoc>* table_contents = (pair<long int, InfTermDoc>*) malloc(sizeof(pair<long int, InfTermDoc>) * l_docs_size);
+    size_t i = 0;
+    for (const pair<long int, InfTermDoc>& entry : informaciontermino.l_docs)
+    {
+        table_contents[i] = entry;
+        i++;
+    }
+    fichero_salida.write((const char*) table_contents, sizeof(pair<long int, InfTermDoc>) * l_docs_size);
+    free(table_contents);    
+}
+
+void GestorFicheros::leer(InformacionTermino& informaciontermino, ifstream& fichero_entrada)
+{
+    fichero_entrada.read(( char*) &informaciontermino.ftc, sizeof(int));
+    unsigned long int l_docs_size;
+    fichero_entrada.read(( char*) &l_docs_size, sizeof(unsigned long int));
+    size_t no_entries = l_docs_size / sizeof(pair<long int, InfTermDoc>);
+    pair<long int, InfTermDoc>* table_contents = (pair<long int, InfTermDoc>*) malloc(sizeof(pair<long int, InfTermDoc>) * l_docs_size);
+    fichero_entrada.read(( char*) table_contents, sizeof(pair<long int, InfTermDoc>) * l_docs_size);
+    for (size_t i = 0; i < l_docs_size; i++)
+        informaciontermino.l_docs.emplace(table_contents[i]);
+    free(table_contents);    
+}
+

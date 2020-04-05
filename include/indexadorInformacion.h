@@ -10,6 +10,8 @@
 class InfTermDoc
 {
     friend class IndexadorHash;
+    friend class GestorFicheros;
+    friend class Debugger;
     friend std::ostream& operator<<(std::ostream& s, const InfTermDoc& p);
     private:
         int ft;
@@ -25,6 +27,8 @@ class InfTermDoc
 class InformacionTermino
 {
     friend class IndexadorHash;
+    friend class GestorFicheros;
+    friend class Debugger;
     friend std::ostream& operator<<(std::ostream& s, const InformacionTermino& p);
     private:
         int ftc;

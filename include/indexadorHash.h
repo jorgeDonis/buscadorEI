@@ -12,6 +12,7 @@
 class IndexadorHash
 {
     friend std::ostream& operator<<(std::ostream&, const IndexadorHash&);
+    friend class Debugger;
     private:
         static size_t get_file_size(const std::string&);
         static std::string NOMBRE_FICHERO_MAPA_INDICE;
@@ -109,10 +110,11 @@ class IndexadorHash
 class GestorFicheros
 {
     private:
-        std::ifstream fichero_entrada;
-        std::ofstream fichero_salida;
     public:
-        void guardar(const InfTermDoc&);
+        void guardar(const InfTermDoc&, std::ofstream&);
+        void leer(InfTermDoc&, std::ifstream&);
+        void guardar(const InformacionTermino&, std::ofstream&);
+        void leer(InformacionTermino&, std::ifstream&);
 };
 
 #endif
