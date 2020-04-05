@@ -8,7 +8,9 @@ int main()
     IndexadorHash indexador("stopwords.txt", " \n.\t,-", false, true, "", 0, false, true);
     indexador.IndexarDirectorio("./corpus_test");
     indexador.ImprimirIndexacion();
-    indexador.ListarTerminos("./corpus_test/pagina1.txt");
+    indexador.GuardarIndexacion();
+    IndexadorHash indexador2("/home/jorge/buscadorEI");
+    indexador2.ImprimirIndexacion();
     return 0;
 }
 

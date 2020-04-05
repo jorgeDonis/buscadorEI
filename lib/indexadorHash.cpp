@@ -16,6 +16,7 @@ using namespace std;
 
 string IndexadorHash::NOMBRE_FICHERO_MAPA_INDICE = "indice.mapa";
 const string IndexadorHash::NOMBRE_LISTA_FICHEROS = ".ficheros_corpus.lista";
+const string IndexadorHash::FICHERO_BINARIO_INDICE = "indice.bin";
 
 size_t IndexadorHash::get_file_size(const string& filename)
 {
@@ -167,7 +168,42 @@ bool IndexadorHash::GuardarIndexacion() const
             return false;
         }
     }
-    return false; //TODO IMPLEMENTAR GUARDAR INFORMACION
+    ofstream file(directorioIndice + "/" + FICHERO_BINARIO_INDICE, ios::out | ios::binary);
+    if (file.is_open())
+    {
+        file.write((char*) this, sizeof(this));
+    }
+    else
+    {
+        cerr << "ERROR: no se pudo crear el fichero índice: " << FICHERO_BINARIO_INDICE << endl;
+        return false;
+    }
+    return true;
+}
+
+IndexadorHash::IndexadorHash(const string& directorioIndexacion)
+{
+    if (!Tokenizador::file_exists(directorioIndexacion))
+        cerr << "ERROR: el directorio " << directorioIndexacion << " no existe" << endl;
+    else if (!Tokenizador::is_dir(directorioIndexacion))
+        cerr << "ERROR: " << directorioIndexacion << " no es un directorio" << endl;
+    else
+    {
+        ifstream file(directorioIndexacion + "/" + FICHERO_BINARIO_INDICE, ios::in | ios::binary | ios::ate);
+        if (file.is_open())
+        {
+            streampos size = file.tellg();
+            IndexadorHash* indexador_vacio = new IndexadorHash();
+            file.seekg(0, ios::beg);
+            file.read((char*) indexador_vacio, size);
+            file.close();
+            this->~IndexadorHash();
+            copy_vals(*indexador_vacio);
+            delete[] indexador_vacio;
+        }
+        else
+            cerr << "ERROR: no se pudo abrir " << directorioIndexacion << endl;
+    }
 }
 
 void IndexadorHash::eliminar_doc(const string& nombreDoc)
@@ -594,4 +630,9 @@ bool IndexadorHash::ListarDocs(const std::string& nomDoc) const
         return false;
     cout << nomDoc << "\t" << it->second << endl;
     return true;
+}
+
+void GestorFicheros::guardar(const InfTermDoc& inftermdoc)
+{
+
 }

@@ -7,6 +7,7 @@
 #include "indexadorInformacion.h"
 #include "tokenizador.h"
 #include "stemmer.h"
+#include <fstream>
 
 class IndexadorHash
 {
@@ -15,7 +16,8 @@ class IndexadorHash
         static size_t get_file_size(const std::string&);
         static std::string NOMBRE_FICHERO_MAPA_INDICE;
         const static std::string NOMBRE_LISTA_FICHEROS;
-        const size_t MAX_PATHNAME_LEN = 256;
+        const static size_t MAX_PATHNAME_LEN = 256;
+        const static std::string FICHERO_BINARIO_INDICE;
         IndexadorHash();
         std::unordered_map<std::string, InformacionTermino> indice;
         std::unordered_map<std::string, InfDoc> indiceDocs;
@@ -93,11 +95,24 @@ class IndexadorHash
         bool ListarTerminos(const std::string& nomDoc) const;
         void ListarDocs() const
         {
-            for (unordered_map<string, InfDoc>::const_iterator it;
+            for (unordered_map<string, InfDoc>::const_iterator it = indiceDocs.begin();
                 it != indiceDocs.end(); ++it)
                 cout << it->first << "\t" << it->second << endl;
         }
         bool ListarDocs(const std::string& nomDoc) const;
+};
+
+/**
+ * @brief Gestiona la lectura y escritura de archivos y permite la serialización de
+ * la parte privada del indexador
+ */
+class GestorFicheros
+{
+    private:
+        std::ifstream fichero_entrada;
+        std::ofstream fichero_salida;
+    public:
+        void guardar(const InfTermDoc&);
 };
 
 #endif
