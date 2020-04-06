@@ -12,6 +12,7 @@
 class IndexadorHash
 {
     friend std::ostream& operator<<(std::ostream&, const IndexadorHash&);
+    friend class GestorFicheros;
     friend class Debugger;
     private:
         static size_t get_file_size(const std::string&);
@@ -22,18 +23,18 @@ class IndexadorHash
         IndexadorHash();
         std::unordered_map<std::string, InformacionTermino> indice;
         std::unordered_map<std::string, InfDoc> indiceDocs;
-        InfColeccionDocs informacionColeccionDocs;
-        std::string pregunta;
         std::unordered_map<std::string, InformacionTerminoPregunta> indicePregunta;
-        InformacionPregunta infPregunta;
         std::unordered_set<std::string> stopWords;
-        std::string ficheroStopWords;
         Tokenizador tok;
+        std::string pregunta;
+        std::string ficheroStopWords;
         std::string directorioIndice;
+        InfColeccionDocs informacionColeccionDocs;
+        InformacionPregunta infPregunta;
         int tipoStemmer;
-        stemmerPorter stemmer;
         bool almacenarEnDisco;
         bool almacenarPosTerm;
+        stemmerPorter stemmer;
         void actualizar_indice_pregunta(const std::string&, size_t);
         void actualizar_indice(const string& token, InfDoc&, int);
         bool indexar_documento(const string&);
@@ -110,11 +111,41 @@ class IndexadorHash
 class GestorFicheros
 {
     private:
+        static void guardar(const std::string& foo, std::ofstream& fichero_salida)
+        {
+            unsigned long int tam_string = foo.size() + 1;
+            fichero_salida.write((const char*) &tam_string, sizeof(unsigned long int));
+            fichero_salida.write(foo.c_str(), sizeof(char)* tam_string);
+        }
+        static void leer(std::string& foo, std::ifstream& fichero_entrada)
+        {
+            unsigned long int tam_string;
+            fichero_entrada.read((char*) &tam_string, sizeof(unsigned long int));
+            char* foo_str = (char*) malloc(sizeof(char) * tam_string);
+            fichero_entrada.read(foo_str, sizeof(char) * tam_string);
+            foo = string(foo_str);
+            free(foo_str);
+        }
     public:
-        void guardar(const InfTermDoc&, std::ofstream&);
-        void leer(InfTermDoc&, std::ifstream&);
-        void guardar(const InformacionTermino&, std::ofstream&);
-        void leer(InformacionTermino&, std::ifstream&);
+        static void guardar(const InfTermDoc&, std::ofstream&);
+        static void leer(InfTermDoc&, std::ifstream&);
+        static void guardar(const InformacionTermino&, std::ofstream&);
+        static void leer(InformacionTermino&, std::ifstream&);
+        static void guardar(const std::unordered_map<std::string, InformacionTermino>&, std::ofstream&);
+        static void leer(std::unordered_map<std::string, InformacionTermino>&, std::ifstream&);
+        static void guardar(const std::unordered_map<std::string, InfDoc>&, std::ofstream&);
+        static void leer(std::unordered_map<std::string, InfDoc>&, std::ifstream&);
+        static void guardar(const InformacionTerminoPregunta&, std::ofstream&);
+        static void leer(InformacionTerminoPregunta&, std::ifstream&);
+        static void guardar(const std::unordered_map<std::string, InformacionTerminoPregunta>&, std::ofstream&);
+        static void leer(std::unordered_map<std::string, InformacionTerminoPregunta>&, std::ifstream&);
+        static void guardar(const std::unordered_set<std::string>&, std::ofstream&);
+        static void leer(std::unordered_set<std::string>&, std::ifstream&);
+        static void guardar(const Tokenizador&, std::ofstream&);
+        static void leer(Tokenizador&, std::ifstream&);
+        static void guardar(const IndexadorHash&, std::ofstream&);
+        static void leer(IndexadorHash&, std::ifstream&);
 };
+
 
 #endif

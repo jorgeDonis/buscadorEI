@@ -671,16 +671,12 @@ void GestorFicheros::guardar(const InformacionTermino& informaciontermino, ofstr
 {
     fichero_salida.write((const char*) &informaciontermino.ftc, sizeof(int));
     unsigned long int l_docs_size = informaciontermino.l_docs.size();
-    fichero_salida.write((const char*) &l_docs_size, sizeof(unsigned long int));
-    pair<long int, InfTermDoc>* table_contents = (pair<long int, InfTermDoc>*) malloc(sizeof(pair<long int, InfTermDoc>) * l_docs_size);
-    size_t i = 0;
+    fichero_salida.write((const char*) &l_docs_size, sizeof(unsigned long int)); //escribo el numero de entradas
     for (const pair<long int, InfTermDoc>& entry : informaciontermino.l_docs)
     {
-        table_contents[i] = entry;
-        i++;
+        fichero_salida.write((const char*) &entry.first, sizeof(long int));
+        guardar(entry.second, fichero_salida);
     }
-    fichero_salida.write((const char*) table_contents, sizeof(pair<long int, InfTermDoc>) * l_docs_size);
-    free(table_contents);    
 }
 
 void GestorFicheros::leer(InformacionTermino& informaciontermino, ifstream& fichero_entrada)
@@ -688,11 +684,225 @@ void GestorFicheros::leer(InformacionTermino& informaciontermino, ifstream& fich
     fichero_entrada.read(( char*) &informaciontermino.ftc, sizeof(int));
     unsigned long int l_docs_size;
     fichero_entrada.read(( char*) &l_docs_size, sizeof(unsigned long int));
-    size_t no_entries = l_docs_size / sizeof(pair<long int, InfTermDoc>);
-    pair<long int, InfTermDoc>* table_contents = (pair<long int, InfTermDoc>*) malloc(sizeof(pair<long int, InfTermDoc>) * l_docs_size);
-    fichero_entrada.read(( char*) table_contents, sizeof(pair<long int, InfTermDoc>) * l_docs_size);
     for (size_t i = 0; i < l_docs_size; i++)
-        informaciontermino.l_docs.emplace(table_contents[i]);
-    free(table_contents);    
+    {
+        long int id_doc;
+        InfTermDoc inftermdoc;
+        fichero_entrada.read((char*) &id_doc, sizeof(long int));
+        leer(inftermdoc, fichero_entrada);
+        informaciontermino.l_docs.emplace(id_doc, inftermdoc);
+    }
 }
+
+void GestorFicheros::guardar(const std::unordered_map<std::string, InformacionTermino>& indice, std::ofstream& fichero_salida)
+{
+    unsigned long int numero_entradas = indice.size();
+    fichero_salida.write((const char*) &numero_entradas, sizeof(unsigned long int));
+    for (const pair<string, InformacionTermino>& entrada : indice)
+    {
+        int tam_string = entrada.first.length() + 1;
+        fichero_salida.write((const char*) &tam_string, sizeof(int));
+        fichero_salida.write((const char*) entrada.first.c_str(), tam_string * sizeof(char));
+        guardar(entrada.second, fichero_salida);
+    }
+}
+
+void GestorFicheros::leer(std::unordered_map<std::string, InformacionTermino>& indice, std::ifstream& fichero_entrada)
+{
+    unsigned long int numero_entradas;
+    fichero_entrada.read((char*) &numero_entradas, sizeof(unsigned long int));
+    for (size_t i = 0; i < numero_entradas; i++)
+    {
+        int tam_string;
+        fichero_entrada.read((char*) &tam_string, sizeof(int));
+        size_t tam_byte_str = sizeof(char) * tam_string;
+        char* token = (char*) malloc(tam_byte_str);
+        fichero_entrada.read(token, tam_byte_str);
+        InformacionTermino informaciontermino;
+        leer(informaciontermino, fichero_entrada);
+        indice.emplace(string(token), informaciontermino);
+        free(token);
+    }
+}
+
+void GestorFicheros::guardar(const std::unordered_map<std::string, InfDoc>& indiceDocs, std::ofstream& fichero_salida)
+{
+    unsigned long int numero_entradas = indiceDocs.size();
+    fichero_salida.write((const char*) &numero_entradas, sizeof(unsigned long int));
+    for (const pair<string, InfDoc>& entrada : indiceDocs)
+    {
+        int tam_string = entrada.first.length() + 1;
+        fichero_salida.write((const char*) &tam_string, sizeof(int));
+        fichero_salida.write((const char*) entrada.first.c_str(), tam_string * sizeof(char));
+        fichero_salida.write((const char*) &entrada.second, sizeof(InfDoc));
+    }
+}
+
+void GestorFicheros::leer(std::unordered_map<std::string, InfDoc>& indiceDocs, std::ifstream& fichero_entrada)
+{
+    unsigned long int numero_entradas;
+    fichero_entrada.read((char*) &numero_entradas, sizeof(unsigned long int));
+    for (size_t i = 0; i < numero_entradas; i++)
+    {
+        int tam_string;
+        fichero_entrada.read((char*) &tam_string, sizeof(int));
+        size_t tam_byte_str = sizeof(char) * tam_string;
+        char* nombreDoc = (char*) malloc(tam_byte_str);
+        fichero_entrada.read(nombreDoc, tam_byte_str);
+        InfDoc infDoc;
+        fichero_entrada.read((char*) &infDoc, sizeof(InfDoc));
+        indiceDocs.emplace(string(nombreDoc), infDoc);
+        free(nombreDoc);
+    }
+}
+
+void GestorFicheros::guardar(const InformacionTerminoPregunta& inf, std::ofstream& fichero_salida)
+{
+    fichero_salida.write((const char*) &inf.ft, sizeof(int));
+    unsigned long int numero_pos = inf.posTerm.size();
+    fichero_salida.write((const char*) &numero_pos, sizeof(unsigned long int));
+    int* posiciones = (int*) malloc(sizeof(int) * numero_pos);
+    size_t i = 0;
+    for (const int& pos : inf.posTerm)
+    {
+        posiciones[i] = pos;
+        i++;
+    }
+    fichero_salida.write((const char*) posiciones, sizeof(int) * numero_pos);
+    free(posiciones);
+}
+
+void GestorFicheros::leer(InformacionTerminoPregunta& inf, std::ifstream& fichero_entrada)
+{
+    fichero_entrada.read((char*) &inf.ft, sizeof(int));
+    unsigned long int numero_pos;
+    fichero_entrada.read((char*) &numero_pos, sizeof(unsigned long int));
+    int* posiciones = (int*) malloc(sizeof(int) * numero_pos);
+    fichero_entrada.read((char*) posiciones, sizeof(int) * numero_pos);
+    for (size_t i = 0; i < numero_pos; i++)
+        inf.posTerm.push_back(posiciones[i]);
+    free(posiciones);
+}
+
+void GestorFicheros::guardar(const std::unordered_map<std::string, InformacionTerminoPregunta>& indicePregunta, std::ofstream& fichero_salida)
+{
+    unsigned long int numero_entradas = indicePregunta.size();
+    fichero_salida.write((const char*) &numero_entradas, sizeof(unsigned long int));
+    for (const pair<string, InformacionTerminoPregunta>& entrada : indicePregunta)
+    {
+        int tam_string = entrada.first.length() + 1;
+        fichero_salida.write((const char*) &tam_string, sizeof(int));
+        fichero_salida.write((const char*) entrada.first.c_str(), tam_string * sizeof(char));
+        guardar(entrada.second, fichero_salida);
+    }
+}
+
+void GestorFicheros::leer(std::unordered_map<std::string, InformacionTerminoPregunta>& indicePregunta, std::ifstream& fichero_entrada)
+{
+    unsigned long int numero_entradas;
+    fichero_entrada.read((char*) &numero_entradas, sizeof(unsigned long int));
+    for (size_t i = 0; i < numero_entradas; i++)
+    {
+        int tam_string;
+        fichero_entrada.read((char*) &tam_string, sizeof(int));
+        size_t tam_byte_str = sizeof(char) * tam_string;
+        char* nombreDoc = (char*) malloc(tam_byte_str);
+        fichero_entrada.read(nombreDoc, tam_byte_str);
+        InformacionTerminoPregunta infPregunta;
+        leer(infPregunta, fichero_entrada);
+        indicePregunta.emplace(string(nombreDoc), infPregunta);
+        free(nombreDoc);
+    }
+}
+
+void GestorFicheros::guardar(const std::unordered_set<std::string>& stopwords, std::ofstream& fichero_salida)
+{
+    unsigned long int num_stopwords = stopwords.size();
+    fichero_salida.write((const char*) &num_stopwords, sizeof(unsigned long int));
+    for (const string& stopword : stopwords)
+    {
+        int tam_string = stopword.length() + 1;
+        fichero_salida.write((const char*) &tam_string, sizeof(int));
+        fichero_salida.write((const char*) stopword.c_str(), tam_string * sizeof(char));
+    }
+}
+
+void GestorFicheros::leer(std::unordered_set<std::string>& stopwords, std::ifstream& fichero_entrada)
+{
+    unsigned long int num_stopwords;
+    fichero_entrada.read((char*) &num_stopwords, sizeof(unsigned long int));
+    for (size_t i = 0; i < num_stopwords; i++)
+    {
+        int tam_string;
+        fichero_entrada.read((char*) &tam_string, sizeof(int));
+        char* stopword = (char*) malloc (tam_string * sizeof(char));
+        fichero_entrada.read((char*) stopword, tam_string * sizeof(char));
+        stopwords.emplace(string(stopword));
+        free(stopword);
+    }
+}
+
+void GestorFicheros::guardar(const Tokenizador& tok, std::ofstream& fichero_salida)
+{
+    unsigned long int tam_delimitadores = tok.delimiters.size() + 1;
+    fichero_salida.write((const char*) &tam_delimitadores, sizeof(unsigned long int));
+    fichero_salida.write((const char*) tok.delimiters.c_str(), sizeof(char) * tam_delimitadores);
+    fichero_salida.write((const char*) tok.delimiters_set, sizeof(short) * 256);
+    fichero_salida.write((const char*) &tok.casosEspeciales, sizeof(bool));
+    fichero_salida.write((const char*) &tok.pasarAminuscSinAcentos, sizeof(bool));
+}
+
+void GestorFicheros::leer(Tokenizador& tok, std::ifstream& fichero_entrada)
+{
+    unsigned long int tam_delimitadores;
+    fichero_entrada.read((char*) &tam_delimitadores, sizeof(unsigned long int));
+    char* delimitadores = (char*) malloc(sizeof(char) * tam_delimitadores);
+    fichero_entrada.read(delimitadores, sizeof(char) * tam_delimitadores);
+    tok.delimiters = string(delimitadores);
+    free(delimitadores);
+    fichero_entrada.read((char * ) tok.delimiters_set, sizeof(short) * 256);
+    fichero_entrada.read((char*) &tok.casosEspeciales, sizeof(bool));
+    fichero_entrada.read((char*) &tok.pasarAminuscSinAcentos, sizeof(bool));
+}
+
+void GestorFicheros::guardar(const IndexadorHash& index, std::ofstream& fichero_salida)
+{
+    guardar(index.indice, fichero_salida);
+    guardar(index.indiceDocs, fichero_salida);
+    guardar(index.indicePregunta, fichero_salida);
+    guardar(index.stopWords, fichero_salida);
+    guardar(index.tok, fichero_salida);
+    guardar(index.pregunta, fichero_salida);
+    guardar(index.ficheroStopWords, fichero_salida);
+    guardar(index.directorioIndice, fichero_salida);
+    fichero_salida.write((const char*) &index.informacionColeccionDocs, sizeof(InfColeccionDocs));
+    fichero_salida.write((const char*) &index.infPregunta, sizeof(InformacionPregunta));
+    fichero_salida.write((const char*) &index.tipoStemmer, sizeof(int));
+    fichero_salida.write((const char*) &index.almacenarEnDisco, sizeof(bool));
+    fichero_salida.write((const char*) &index.almacenarPosTerm, sizeof(bool));
+}
+
+void GestorFicheros::leer(IndexadorHash& index, std::ifstream& fichero_entrada)
+{
+    leer(index.indice, fichero_entrada);
+    leer(index.indiceDocs, fichero_entrada);
+    leer(index.indicePregunta, fichero_entrada);
+    leer(index.stopWords, fichero_entrada);
+    leer(index.tok, fichero_entrada);
+    leer(index.pregunta, fichero_entrada);
+    leer(index.ficheroStopWords, fichero_entrada);
+    leer(index.directorioIndice, fichero_entrada);
+    fichero_entrada.read((char*) &index.informacionColeccionDocs, sizeof(InfColeccionDocs));
+    fichero_entrada.read((char*) &index.infPregunta, sizeof(InformacionPregunta));
+    fichero_entrada.read((char*) &index.tipoStemmer, sizeof(int));
+    fichero_entrada.read((char*) &index.almacenarEnDisco, sizeof(bool));
+    fichero_entrada.read((char*) &index.almacenarPosTerm, sizeof(bool));    
+}
+
+
+
+
+
+
+
 

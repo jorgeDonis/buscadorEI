@@ -44,6 +44,8 @@ class InformacionTermino
 class InfDoc
 {
     friend class IndexadorHash;
+    friend class GestorFicheros;
+    friend class Debugger;
     static long int DOC_ID;
     friend std::ostream& operator<<(std::ostream&, const InfDoc&);
     private:
@@ -64,6 +66,8 @@ class InfDoc
 class InfColeccionDocs
 {
     friend class IndexadorHash;
+    friend class GestorFicheros;
+    friend class Debugger;
     friend std::ostream& operator<<(std::ostream&, const InfColeccionDocs&);
     private:
         long int numDocs;
@@ -80,6 +84,8 @@ class InfColeccionDocs
 
 class InformacionTerminoPregunta
 {
+    friend class GestorFicheros;
+    friend class Debugger;
     friend class IndexadorHash;
     friend std::ostream& operator<<(std::ostream&, const InformacionTerminoPregunta&);
     private:
@@ -95,6 +101,8 @@ class InformacionTerminoPregunta
 
 class InformacionPregunta
 {
+    friend class GestorFicheros;
+    friend class Debugger;
     friend class IndexadorHash;
     friend std::ostream& operator<<(std::ostream&, const InformacionPregunta&);
     private:
@@ -106,6 +114,6 @@ class InformacionPregunta
         InformacionPregunta() {numTotalPal = numTotalPalSinParada = numTotalPalDiferentes = 0;}
         InformacionPregunta(const InformacionPregunta& foo) {copy_vals(foo);}
         InformacionPregunta& operator=(const InformacionPregunta&);
-};
+};  
 
 #endif

@@ -228,7 +228,7 @@ char* Tokenizador::TokenizarFichero(const string& input_filename)
 
 char* Tokenizador::TokenizarString(const string& str)
 {
-    char* output_map = new char[str.size()];
+    char* output_map = new char[str.size() + 20]; //este 20 es por si falta memoria
     if (casosEspeciales)
         Tokenizar_fichero_especial(str.c_str(), output_map, str.size());
     else
