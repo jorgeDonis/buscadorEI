@@ -111,13 +111,13 @@ class IndexadorHash
 class GestorFicheros
 {
     private:
-        static void guardar(const std::string& foo, std::ofstream& fichero_salida)
+        static void guardar(const std::string& foo, std::ostream& fichero_salida)
         {
             unsigned long int tam_string = foo.size() + 1;
             fichero_salida.write((const char*) &tam_string, sizeof(unsigned long int));
             fichero_salida.write(foo.c_str(), sizeof(char)* tam_string);
         }
-        static void leer(std::string& foo, std::ifstream& fichero_entrada)
+        static void leer(std::string& foo, std::istream& fichero_entrada)
         {
             unsigned long int tam_string;
             fichero_entrada.read((char*) &tam_string, sizeof(unsigned long int));
@@ -127,24 +127,24 @@ class GestorFicheros
             free(foo_str);
         }
     public:
-        static void guardar(const InfTermDoc&, std::ofstream&);
-        static void leer(InfTermDoc&, std::ifstream&);
-        static void guardar(const InformacionTermino&, std::ofstream&);
-        static void leer(InformacionTermino&, std::ifstream&);
-        static void guardar(const std::unordered_map<std::string, InformacionTermino>&, std::ofstream&);
-        static void leer(std::unordered_map<std::string, InformacionTermino>&, std::ifstream&);
-        static void guardar(const std::unordered_map<std::string, InfDoc>&, std::ofstream&);
-        static void leer(std::unordered_map<std::string, InfDoc>&, std::ifstream&);
-        static void guardar(const InformacionTerminoPregunta&, std::ofstream&);
-        static void leer(InformacionTerminoPregunta&, std::ifstream&);
-        static void guardar(const std::unordered_map<std::string, InformacionTerminoPregunta>&, std::ofstream&);
-        static void leer(std::unordered_map<std::string, InformacionTerminoPregunta>&, std::ifstream&);
-        static void guardar(const std::unordered_set<std::string>&, std::ofstream&);
-        static void leer(std::unordered_set<std::string>&, std::ifstream&);
-        static void guardar(const Tokenizador&, std::ofstream&);
-        static void leer(Tokenizador&, std::ifstream&);
-        static void guardar(const IndexadorHash&, std::ofstream&);
-        static void leer(IndexadorHash&, std::ifstream&);
+        static void guardar(const InfTermDoc&, std::ostream&);
+        static void leer(InfTermDoc&, std::istream&);
+        static void guardar(const InformacionTermino&, std::ostream&);
+        static void leer(InformacionTermino&, std::istream&);
+        static void guardar(const std::unordered_map<std::string, InformacionTermino>&, std::ostream&);
+        static void leer(std::unordered_map<std::string, InformacionTermino>&, std::istream&);
+        static void guardar(const std::unordered_map<std::string, InfDoc>&, std::ostream&);
+        static void leer(std::unordered_map<std::string, InfDoc>&, std::istream&);
+        static void guardar(const InformacionTerminoPregunta&, std::ostream&);
+        static void leer(InformacionTerminoPregunta&, std::istream&);
+        static void guardar(const std::unordered_map<std::string, InformacionTerminoPregunta>&, std::ostream&);
+        static void leer(std::unordered_map<std::string, InformacionTerminoPregunta>&, std::istream&);
+        static void guardar(const std::unordered_set<std::string>&, std::ostream&);
+        static void leer(std::unordered_set<std::string>&, std::istream&);
+        static void guardar(const Tokenizador&, std::ostream&);
+        static void leer(Tokenizador&, std::istream&);
+        static void guardar(const IndexadorHash&, std::ostream&);
+        static void leer(IndexadorHash&, std::istream&);
 };
 
 
