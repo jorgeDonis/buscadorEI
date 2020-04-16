@@ -1,4 +1,5 @@
 #include "indexadorHash.h"
+#include <sstream>
 
 class Debugger
 {
@@ -29,19 +30,17 @@ class Debugger
             IndexadorHash indexador("stopwords.txt", " \n.\t,-@", false, true, "", 1, false, true);
             indexador.IndexarDirectorio("./corpus_test");
             IndexadorHash copia;
-            ofstream fichero_salida("salida.bin", ios::binary | ios::out);
-            GestorFicheros gestor;
-            gestor.guardar(indexador, fichero_salida);
-            fichero_salida.close();
-            ifstream fichero_entrada("salida.bin", ios::binary | ios::in);
-            gestor.leer(copia, fichero_entrada);
+            fstream fichero("indexador.bin", ios::binary | ios::out);
+            GestorFicheros::guardar(indexador, fichero);
+            fichero.close();
+            fstream fichero_entrada("indexador.bin", ios::binary | ios::in);
+            GestorFicheros::leer(copia, fichero_entrada);
             fichero_entrada.close();
-            cout << endl << "ESCRITURA FICHEROS" << endl;
-            cout << "stopwords :" << endl;
+            cout << "ORIGINAL" << endl;
             indexador.ImprimirIndexacion();
-            cout << endl << "--------------------------------" << endl;
-            cout << "stopwordsCopia :" << endl;
+            cout << "COPIA" << endl;
             copia.ImprimirIndexacion();
+            cout << "tam bytes : " << indexador.informacionColeccionDocs.tamBytes << endl;
         }
 };
 
