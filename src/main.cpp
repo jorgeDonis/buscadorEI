@@ -27,20 +27,14 @@ class Debugger
 
         static void debug()
         {
-            IndexadorHash indexador("stopwords.txt", " \n.\t,-@", false, true, "", 1, false, true);
+            IndexadorHash indexador("stopwords.txt", " \n.\t,-@", false, true, "./indice_save", 1, false, true);
             indexador.IndexarDirectorio("./corpus_test");
-            IndexadorHash copia;
-            fstream fichero("indexador.bin", ios::binary | ios::out);
-            GestorFicheros::guardar(indexador, fichero);
-            fichero.close();
-            fstream fichero_entrada("indexador.bin", ios::binary | ios::in);
-            GestorFicheros::leer(copia, fichero_entrada);
-            fichero_entrada.close();
+            indexador.GuardarIndexacion();
+            IndexadorHash copia("./indice_save");
             cout << "ORIGINAL" << endl;
             indexador.ImprimirIndexacion();
             cout << "COPIA" << endl;
             copia.ImprimirIndexacion();
-            cout << "tam bytes : " << indexador.informacionColeccionDocs.tamBytes << endl;
         }
 };
 

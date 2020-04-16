@@ -168,10 +168,11 @@ bool IndexadorHash::GuardarIndexacion() const
             return false;
         }
     }
-    ofstream file(directorioIndice + "/" + FICHERO_BINARIO_INDICE, ios::out | ios::binary);
+    fstream file(directorioIndice + "/" + FICHERO_BINARIO_INDICE, ios::out | ios::binary);
     if (file.is_open())
     {
-        file.write((char*) this, sizeof(this));
+        GestorFicheros::guardar(*this, file);
+        file.close();
     }
     else
     {
@@ -189,17 +190,11 @@ IndexadorHash::IndexadorHash(const string& directorioIndexacion)
         cerr << "ERROR: " << directorioIndexacion << " no es un directorio" << endl;
     else
     {
-        ifstream file(directorioIndexacion + "/" + FICHERO_BINARIO_INDICE, ios::in | ios::binary | ios::ate);
+        fstream file(directorioIndexacion + "/" + FICHERO_BINARIO_INDICE, ios::in | ios::binary);
         if (file.is_open())
         {
-            streampos size = file.tellg();
-            IndexadorHash* indexador_vacio = new IndexadorHash();
-            file.seekg(0, ios::beg);
-            file.read((char*) indexador_vacio, size);
+            GestorFicheros::leer(*this, file);
             file.close();
-            this->~IndexadorHash();
-            copy_vals(*indexador_vacio);
-            delete[] indexador_vacio;
         }
         else
             cerr << "ERROR: no se pudo abrir " << directorioIndexacion << endl;
