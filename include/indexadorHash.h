@@ -79,7 +79,7 @@ class IndexadorHash
         bool Borra(const std::string& word);
         bool BorraDoc(const std::string& nomDoc);
         void VaciarIndiceDocs() {indiceDocs.clear();}
-        void VaciarIndicePreg() {indicePregunta.clear();}
+        void VaciarIndicePreg();
         bool Actualiza(const std::string& word, const InformacionTermino& inf);
         bool Inserta(const std::string& word, const InformacionTermino& inf);
         int NumPalIndexadas() const {return indice.size();}

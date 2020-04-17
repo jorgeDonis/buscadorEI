@@ -207,7 +207,8 @@ IndexadorHash::IndexadorHash(const string& directorioIndexacion)
 void IndexadorHash::eliminar_doc(const string& nombreDoc)
 {
     list<string> tokens_vacios;
-    long int ID = indiceDocs.find(nombreDoc)->second.idDoc;
+    unordered_map<string, InfDoc>::iterator doc_it = indiceDocs.find(nombreDoc);
+    long int ID = doc_it->second.idDoc;
     unordered_map<string, InformacionTermino>::iterator it;
     it = indice.begin();
     while (it != indice.end())
@@ -218,15 +219,20 @@ void IndexadorHash::eliminar_doc(const string& nombreDoc)
             it->second.ftc -= it_doc->second.ft;
             if (!it->second.ftc)
                 tokens_vacios.push_back(it->first);
-            informacionColeccionDocs.numTotalPal -= it_doc->second.ft;
-            informacionColeccionDocs.numTotalPalSinParada -= it_doc->second.ft;
             it->second.l_docs.erase(ID);
         }
         it++;
     }
+    informacionColeccionDocs.numTotalPal -= doc_it->second.numPal;
+    informacionColeccionDocs.numTotalPalSinParada -= doc_it->second.numPalSinParada;
     informacionColeccionDocs.tamBytes -= indiceDocs[nombreDoc].tamBytes;
     for (const string& token : tokens_vacios)
+    {
         indice.erase(token);
+        informacionColeccionDocs.numTotalPalDiferentes--;
+    }
+    indiceDocs.erase(doc_it);
+    informacionColeccionDocs.numDocs--;
 }
 
 /**
@@ -368,7 +374,7 @@ bool IndexadorHash::IndexarDirectorio(const string& directorio)
         cerr << "ERROR: " << directorio << " no es un directorio" << endl;
         return false;
     }
-    string cmd = "find " + directorio + " -type f > " + IndexadorHash::NOMBRE_LISTA_FICHEROS;
+    string cmd = "find " + directorio + " -type f | sort > " + IndexadorHash::NOMBRE_LISTA_FICHEROS;
     system(cmd.c_str());
     return Indexar(IndexadorHash::NOMBRE_LISTA_FICHEROS);
 }
@@ -393,6 +399,12 @@ void IndexadorHash::actualizar_indice_pregunta(const string& token, size_t pos)
         indicePregunta[token].posTerm.push_back(pos);
 }
 
+void IndexadorHash::VaciarIndicePreg()
+{
+    infPregunta.numTotalPal = infPregunta.numTotalPalDiferentes = infPregunta.numTotalPalSinParada = 0;
+    indicePregunta.clear();
+}
+
 /**
  * @brief Actualiza pregunta, indicePregunta e infPregunta
  * 
@@ -402,20 +414,23 @@ void IndexadorHash::actualizar_indice_pregunta(const string& token, size_t pos)
  */
 bool IndexadorHash::IndexarPregunta(const string& pregunta)
 {
+    VaciarIndicePreg();
     this->pregunta = pregunta;
     try
     {
         int posTerm = -1;
-        char* tokens = tok.TokenizarString(pregunta + "\n");
+        char* tokens = tok.TokenizarString(pregunta);
         unsigned tokens_it = 0;
         while (tokens[tokens_it] != '\0')
         {
             string token = "";
-            while (tokens[tokens_it] != '\n')
+            while (tokens[tokens_it] != 30)
                 {
                     token += tokens[tokens_it];
                     tokens_it++;
                 }
+            if (token == "")
+                break;
             stemmer.stemmer(token, tipoStemmer);
             tokens_it++;
             infPregunta.numTotalPal++;
@@ -456,7 +471,7 @@ void IndexadorHash::ImprimirIndexacionPregunta() const
 
 bool IndexadorHash::DevuelvePregunta(string& preg) const
 {
-    if (indice.size() > 0)
+    if (indicePregunta.size() > 0)
     {
         preg = pregunta;
         return true;
@@ -480,7 +495,7 @@ bool IndexadorHash::DevuelvePregunta(const string& word, InformacionTerminoPregu
 
 bool IndexadorHash::DevuelvePregunta(InformacionPregunta& inf) const
 {
-    if (indice.size() > 0)
+    if (indicePregunta.size() > 0)
     {
         inf = infPregunta;
         return true;

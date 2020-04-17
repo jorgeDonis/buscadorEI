@@ -177,7 +177,7 @@ InformacionTerminoPregunta& InformacionTerminoPregunta::operator=(const Informac
 ostream& operator<<(ostream& os, const InformacionPregunta& ip)
 {
     os << "numTotalPal: " << ip.numTotalPal << "\tnumTotalPalSinParada: " << ip.numTotalPalSinParada <<
-    "\t numTotalPalDiferentes: " << ip.numTotalPalDiferentes;
+    "\tnumTotalPalDiferentes: " << ip.numTotalPalDiferentes;
     return os;
 }
 
