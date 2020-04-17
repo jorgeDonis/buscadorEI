@@ -46,17 +46,18 @@ ostream& operator<<(ostream& os, const IndexadorHash& index)
 {
     os << "Fichero con el listado de palabras de parada: " << index.ficheroStopWords << endl <<
     "Tokenizador: "<< index.tok << endl << 
-    "Directorio donde se alamcenara el indice generado: " << index.directorioIndice << endl <<
+    "Directorio donde se almacenara el indice generado: " << index.directorioIndice << endl <<
     "Stemmer utilizado: " << index.tipoStemmer << endl <<
     "Informacion de la coleccion indexada: " << index.informacionColeccionDocs << endl <<
     "Se almacenara parte del indice en disco duro: " << index.almacenarEnDisco << endl <<
-    "Se almacenaran las posiciones del terminos: " << index.almacenarPosTerm;
+    "Se almacenaran las posiciones de los terminos: " << index.almacenarPosTerm << endl;
     return os;
 }
 
 IndexadorHash::IndexadorHash() : indice(), indiceDocs(), indicePregunta(), stopWords(), 
                                  informacionColeccionDocs(), tok(), stemmer(), infPregunta()
 {
+    tok.DelimitadoresPalabra(tok.delimiters);
     pregunta = "";
     ficheroStopWords = "";
     directorioIndice = "";
@@ -115,6 +116,7 @@ IndexadorHash::IndexadorHash(const std::string &fichStopWords, const std::string
                              : indice(), indicePregunta(), stopWords(), informacionColeccionDocs(), tok(delimitadores, detectComp, minuscSinAcentos)
                              , stemmer(), indiceDocs(), infPregunta()
 {
+    tok.DelimitadoresPalabra(tok.delimiters);
     if (leer_fichero_stopwords(fichStopWords, minuscSinAcentos))
     {
         if (dirIndice == "")
@@ -184,6 +186,7 @@ bool IndexadorHash::GuardarIndexacion() const
 
 IndexadorHash::IndexadorHash(const string& directorioIndexacion)
 {
+    tok.DelimitadoresPalabra(tok.delimiters);
     if (!Tokenizador::file_exists(directorioIndexacion))
         cerr << "ERROR: el directorio " << directorioIndexacion << " no existe" << endl;
     else if (!Tokenizador::is_dir(directorioIndexacion))
@@ -258,7 +261,10 @@ void IndexadorHash::actualizar_indice(const string& token, InfDoc& infdoc, int p
     unordered_map<string, InformacionTermino>::iterator it;
     it = indice.find(token);
     if (it == indice.end())
+    {
+        informacionColeccionDocs.numTotalPalDiferentes++;
         it = indice.emplace(token, InformacionTermino()).first;
+    }
     it->second.ftc++;
 
     unordered_map<long, InfTermDoc>::iterator it_doc;
@@ -291,11 +297,13 @@ bool IndexadorHash::indexar_documento(InfDoc& infDoc, const string& nombreDoc)
         while (tokens[tokens_it] != '\0')
         {
             string token = "";
-            while (tokens[tokens_it] != '\n')
+            while (tokens[tokens_it] != 30)
                 {
                     token += tokens[tokens_it];
                     tokens_it++;
                 }
+            if (token.length() == 0)
+                break;
             stemmer.stemmer(token, tipoStemmer);
             tokens_it++;
             infDoc.numPal++;
@@ -308,8 +316,7 @@ bool IndexadorHash::indexar_documento(InfDoc& infDoc, const string& nombreDoc)
         infDoc.tamBytes = get_file_size(nombreDoc);
         informacionColeccionDocs.tamBytes += infDoc.tamBytes;
         informacionColeccionDocs.numTotalPal += infDoc.numPal;
-        informacionColeccionDocs.numTotalPalDiferentes += infDoc.numPalDiferentes;
-        delete[] tokens;
+        free(tokens);
     }
     catch (bad_alloc& e)
     {
@@ -546,7 +553,7 @@ bool IndexadorHash::BorraDoc(const std::string &nomDoc)
     unordered_map<string, InfDoc>::const_iterator it = indiceDocs.find(nomDoc);
     if (it == indiceDocs.end())
         return false;
-    indiceDocs.erase(it);
+    eliminar_doc(nomDoc);
     return true;
 }
 

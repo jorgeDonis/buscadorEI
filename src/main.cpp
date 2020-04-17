@@ -1,48 +1,32 @@
+#include <iostream> 
+#include <string>
+#include <list> 
 #include "indexadorHash.h"
-#include <sstream>
 
-class Debugger
+using namespace std;
+
+/////////////////////////////////////////////////////////
+// ATENCIÓN: Actualizar convenientemente en el fichero indexador03.cpp.sal los tamanyos en bytes de los archivos y de la colección
+/////////////////////////////////////////////////////////
+
+int
+main(void)
 {
-    public:
-        static void print_indice(const unordered_map<string, InformacionTermino >& indice)
-        {
-            for (const pair<string, InformacionTermino>& entrada : indice)
-                cout << "[" << entrada.first << "] : " << entrada.second << endl;
-        }
-        static void print_indice(const unordered_map<string, InfDoc >& indice)
-        {
-            for (const pair<string, InfDoc>& entrada : indice)
-                cout << "[" << entrada.first << "] : " << entrada.second << endl;
-        }
-        static void print_indice(const unordered_map<string, InformacionTerminoPregunta >& indice)
-        {
-            for (const pair<string, InformacionTerminoPregunta>& entrada : indice)
-                cout << "[" << entrada.first << "] : " << entrada.second << endl;
-        }
-        static void print_set(const unordered_set<string>& set)
-        {
-            for (const string& entrada : set)
-                cout << entrada << endl;
-        }
+IndexadorHash a("./StopWordsEspanyol.txt", ". ,:", false, false, "./indicePrueba", 0, false, true);
 
-        static void debug()
-        {
-            IndexadorHash indexador("stopwords.txt", " \n.\t,-@", false, true, "./indice_save", 1, false, true);
-            indexador.IndexarDirectorio("./corpus_test");
-            indexador.GuardarIndexacion();
-            IndexadorHash copia("./indice_save");
-            cout << "ORIGINAL" << endl;
-            indexador.ImprimirIndexacion();
-            cout << "COPIA" << endl;
-            copia.ImprimirIndexacion();
-        }
-};
+if(a.Indexar("./listaFicheros_corto.txt"))
+	cout << "Indexacion terminada" << endl;
+else
+	cout << "Indexacion NO terminada" << endl;
+cout << a.NumPalIndexadas() << endl;
 
-int main()
-{
-    Debugger::debug();
-    return 0;
+a.ListarDocs("corpus_corto/fichero1.txt");
+a.ListarDocs("corpus_corto/fichero2.txt");
+if(a.ListarDocs("corpus_corto/fichero3.txt"))
+	cout << "Existe el archivo corpus_corto/fichero3.txt" << endl;
+else
+	cout << "NO Existe el archivo corpus_corto/fichero3.txt" << endl;
+
+a.ListarInfColeccDocs();
+
 }
-
-
-

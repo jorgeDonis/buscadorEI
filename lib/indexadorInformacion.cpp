@@ -1,7 +1,7 @@
 #include "indexadorInformacion.h"
 #include <ctime>
 
-long int InfDoc::DOC_ID = 0;
+long int InfDoc::DOC_ID = 1;
 
 using namespace std;
 
@@ -118,7 +118,7 @@ InfDoc& InfDoc::operator=(const InfDoc& foo)
 ostream& operator<<(ostream& os, const InfColeccionDocs& icd)
 {
     os << "numDocs: " << icd.numDocs << "\tnumTotalPal: " << icd.numTotalPal << "\tnumTotalPalSinParada: " <<
-    icd.numTotalPalSinParada << "\tnumTotalPalDiferentes: " << icd.numTotalPalDiferentes << "\ttamBytes" <<
+    icd.numTotalPalSinParada << "\tnumTotalPalDiferentes: " << icd.numTotalPalDiferentes << "\ttamBytes: " <<
     icd.tamBytes;
     return os;
 }
