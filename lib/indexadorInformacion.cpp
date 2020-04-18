@@ -35,11 +35,6 @@ InfTermDoc& InfTermDoc::operator=(const InfTermDoc& foo)
     return *this;
 }
 
-InfTermDoc::~InfTermDoc()
-{
-    posTerm.clear();
-}
-
 ostream& operator<<(ostream& os, const InformacionTermino& it)
 {
     os << "Frecuencia total: " << it.ftc << "\tfd: " << it.l_docs.size();
@@ -58,11 +53,6 @@ void InformacionTermino::copy_vals(const InformacionTermino& foo)
 InformacionTermino::InformacionTermino(const InformacionTermino& foo)
 {
     copy_vals(foo);
-}
-
-InformacionTermino::~InformacionTermino()
-{
-    l_docs.clear();
 }
 
 InformacionTermino& InformacionTermino::operator=(const InformacionTermino& foo)

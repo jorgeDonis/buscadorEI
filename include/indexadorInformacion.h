@@ -18,9 +18,9 @@ class InfTermDoc
         std::list<int> posTerm;
         void copy_vals(const InfTermDoc&);
     public:
+        ~InfTermDoc() {;}
         InfTermDoc() {ft = 0;}
         InfTermDoc(const InfTermDoc &);
-        ~InfTermDoc();
         InfTermDoc& operator=(const InfTermDoc&);
 };
 
@@ -37,7 +37,6 @@ class InformacionTermino
     public:
         InformacionTermino() : l_docs() {ftc = 0;}
         InformacionTermino(const InformacionTermino&);
-        ~InformacionTermino();
         InformacionTermino& operator=(const InformacionTermino&);
 };
 
@@ -95,7 +94,6 @@ class InformacionTerminoPregunta
     public:
         InformacionTerminoPregunta() {ft = 0;}
         InformacionTerminoPregunta(const InformacionTerminoPregunta& foo) {copy_vals(foo);}
-        ~InformacionTerminoPregunta() {posTerm.clear();}
         InformacionTerminoPregunta& operator=(const InformacionTerminoPregunta&);
 };
 

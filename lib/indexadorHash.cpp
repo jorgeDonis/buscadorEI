@@ -14,9 +14,10 @@
 
 using namespace std;
 
-string IndexadorHash::NOMBRE_FICHERO_MAPA_INDICE = "indice.mapa";
 const string IndexadorHash::NOMBRE_LISTA_FICHEROS = ".ficheros_corpus.lista";
 const string IndexadorHash::FICHERO_BINARIO_INDICE = "indice.bin";
+const string IndexadorHash::DIRECTORIO_INDICE_DISCO = "./indiceLocal/indice/";
+const string IndexadorHash::DIRECTORIO_INDICE_DOCS_DISCO = "./indiceLocal/indiceDocs/";
 
 size_t IndexadorHash::get_file_size(const string& filename)
 {
@@ -55,7 +56,8 @@ ostream& operator<<(ostream& os, const IndexadorHash& index)
 }
 
 IndexadorHash::IndexadorHash() : indice(), indiceDocs(), indicePregunta(), stopWords(), 
-                                 informacionColeccionDocs(), tok(), stemmer(), infPregunta()
+                                 informacionColeccionDocs(), tok(), stemmer(), infPregunta(),
+                                 indiceDisco(), indiceDocsDisco()
 {
     tok.DelimitadoresPalabra(tok.delimiters);
     pregunta = "";
@@ -98,6 +100,8 @@ void IndexadorHash::copy_vals(const IndexadorHash& foo)
 {
     indice = foo.indice;
     indiceDocs = foo.indiceDocs;
+    indiceDisco = foo.indiceDisco;
+    indiceDocsDisco = foo.indiceDocsDisco;
     informacionColeccionDocs = foo.informacionColeccionDocs;
     pregunta = foo.pregunta;
     indicePregunta = foo.indicePregunta;
@@ -114,7 +118,7 @@ IndexadorHash::IndexadorHash(const std::string &fichStopWords, const std::string
                              const bool &detectComp, const bool &minuscSinAcentos, const std::string &dirIndice,
                              const int &tStemmer, const bool &almEnDisco, const bool &almPosTerm)
                              : indice(), indicePregunta(), stopWords(), informacionColeccionDocs(), tok(delimitadores, detectComp, minuscSinAcentos)
-                             , stemmer(), indiceDocs(), infPregunta()
+                             , stemmer(), indiceDocs(), infPregunta(), indiceDisco(), indiceDocsDisco()
 {
     tok.DelimitadoresPalabra(tok.delimiters);
     if (leer_fichero_stopwords(fichStopWords, minuscSinAcentos))
@@ -145,6 +149,11 @@ IndexadorHash& IndexadorHash::operator=(const IndexadorHash& foo)
 
 void IndexadorHash::ImprimirIndexacion() const
 {
+    if (almacenarEnDisco)
+    {
+        ImprimirIndexacion_disco();
+        return;
+    }
     cout << "Terminos indexados: " << endl;
     unordered_map<string, InformacionTermino>::const_iterator it = indice.begin();
     while (it != indice.end())
@@ -162,6 +171,8 @@ void IndexadorHash::ImprimirIndexacion() const
 
 bool IndexadorHash::GuardarIndexacion() const
 {
+    if (almacenarEnDisco)
+        return GuardarIndexacion_disco();
     if (!Tokenizador::is_dir(directorioIndice))
     {
         if (mkdir(directorioIndice.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == -1)
@@ -334,6 +345,8 @@ bool IndexadorHash::indexar_documento(InfDoc& infDoc, const string& nombreDoc)
 
 bool IndexadorHash::Indexar(const string& ficheroDocumentos)
 {
+    if (almacenarEnDisco)
+        return Indexar_disco(ficheroDocumentos);
     ifstream in_file(ficheroDocumentos);
     if (in_file.is_open())
     {
@@ -508,13 +521,18 @@ bool IndexadorHash::Devuelve(const string& word, InformacionTermino& inf)
     string word_minusc = word;
     Tokenizador::minusc_sin_acentos(word_minusc);
     stemmer.stemmer(word_minusc, tipoStemmer);
-    unordered_map<string, InformacionTermino>::const_iterator it;
-    it = indice.find(word_minusc);
-    if (it == indice.end())
+    if (!almacenarEnDisco)
+    {
+        unordered_map<string, InformacionTermino>::const_iterator it;
+        it = indice.find(word_minusc);
+        if (it == indice.end())
+            return false;
+            inf = it->second;
+        return true;
+    }
+    if (indiceDisco.find(word_minusc) == indiceDisco.end())
         return false;
-    else
-        inf = it->second;
-    return true;
+    inf = GestorFicheros::leerInfoToken(word_minusc);
 }
 
 bool IndexadorHash::Devuelve(const string& word, const string& nomDoc, InfTermDoc& infDoc)
@@ -522,23 +540,36 @@ bool IndexadorHash::Devuelve(const string& word, const string& nomDoc, InfTermDo
     string word_minusc = word;
     Tokenizador::minusc_sin_acentos(word_minusc);
     stemmer.stemmer(word_minusc, tipoStemmer);
-    unordered_map<string, InformacionTermino>::const_iterator it;
-    it = indice.find(word_minusc);
-    if (it == indice.end())
-        return false;
-    else
+    if (!almacenarEnDisco)
     {
-        unordered_map<string, InfDoc>::const_iterator doc_it;
-        doc_it = indiceDocs.find(nomDoc);
-        if (doc_it == indiceDocs.end())
+        unordered_map<string, InformacionTermino>::const_iterator it;
+        it = indice.find(word_minusc);
+        if (it == indice.end())
             return false;
-        long ID = doc_it->second.idDoc;
-        unordered_map<long, InfTermDoc>::const_iterator term_doc_it;
-        term_doc_it = it->second.l_docs.find(ID);
-        if (term_doc_it == it->second.l_docs.end())
-            return false;
-        infDoc = term_doc_it->second;
+        else
+        {
+            unordered_map<string, InfDoc>::const_iterator doc_it;
+            doc_it = indiceDocs.find(nomDoc);
+            if (doc_it == indiceDocs.end())
+                return false;
+            long ID = doc_it->second.idDoc;
+            unordered_map<long, InfTermDoc>::const_iterator term_doc_it;
+            term_doc_it = it->second.l_docs.find(ID);
+            if (term_doc_it == it->second.l_docs.end())
+                return false;
+            infDoc = term_doc_it->second;
+        }
+        return true;
     }
+    if (indiceDisco.find(word_minusc) == indiceDisco.end()
+        || indiceDocsDisco.find(nomDoc) == indiceDocsDisco.end())
+        return false;
+    InformacionTermino infoTerm = GestorFicheros::leerInfoToken(word_minusc);
+    InfDoc infoDoc = GestorFicheros::leerInfoDoc(nomDoc);
+    unordered_map<long int, InfTermDoc>::const_iterator it = infoTerm.l_docs.find(infoDoc.idDoc);
+    if (it == infoTerm.l_docs.end())
+        return false;
+    infDoc = it->second;
     return true;
 }
 
@@ -547,7 +578,9 @@ bool IndexadorHash::Existe(const std::string &word)
     string word_minusc = word;
     Tokenizador::minusc_sin_acentos(word_minusc);
     stemmer.stemmer(word_minusc, tipoStemmer);
-    return indice.find(word_minusc) != indice.end();
+    if (!almacenarEnDisco)
+        return indice.find(word_minusc) != indice.end();
+    return indiceDisco.find(word_minusc) != indiceDisco.end();
 }
 
 bool IndexadorHash::Borra(const std::string &word)
@@ -555,16 +588,27 @@ bool IndexadorHash::Borra(const std::string &word)
     string word_minusc = word;
     Tokenizador::minusc_sin_acentos(word_minusc);
     stemmer.stemmer(word_minusc, tipoStemmer);
-    unordered_map<string, InformacionTermino>::const_iterator it;
-    it = indice.find(word_minusc);
-    if (it == indice.end())
+    if (!almacenarEnDisco)
+    {
+        unordered_map<string, InformacionTermino>::const_iterator it;
+        it = indice.find(word_minusc);
+        if (it == indice.end())
+            return false;
+        indice.erase(it);
+        return true;
+    }
+    if (indiceDisco.find(word) == indiceDisco.end())
         return false;
-    indice.erase(it);
+    indiceDisco.erase(word_minusc);
+    string cmd = "rm " + DIRECTORIO_INDICE_DISCO + word_minusc;
+    system(cmd.c_str());
     return true;
 }
 
 bool IndexadorHash::BorraDoc(const std::string &nomDoc)
 {
+    if (almacenarEnDisco)
+        return BorraDoc_disco(nomDoc);
     unordered_map<string, InfDoc>::const_iterator it = indiceDocs.find(nomDoc);
     if (it == indiceDocs.end())
         return false;
@@ -577,11 +621,18 @@ bool IndexadorHash::Actualiza(const std::string &word, const InformacionTermino 
     string word_minusc = word;
     Tokenizador::minusc_sin_acentos(word_minusc);
     stemmer.stemmer(word_minusc, tipoStemmer);
-    unordered_map<string, InformacionTermino>::const_iterator it;
-    it = indice.find(word_minusc);
-    if (it == indice.end())
+    if (almacenarEnDisco)
+    {
+        unordered_map<string, InformacionTermino>::const_iterator it;
+        it = indice.find(word_minusc);
+        if (it == indice.end())
+            return false;
+        indice[word_minusc] = inf;
+        return true;
+    }
+    if (indiceDisco.find(word_minusc) == indiceDisco.end())
         return false;
-    indice[word_minusc] = inf;
+    GestorFicheros::guardarInfoToken(word_minusc, inf);
     return true;
 }
 
@@ -590,11 +641,18 @@ bool IndexadorHash::Inserta(const std::string &word, const InformacionTermino &i
     string word_minusc = word;
     Tokenizador::minusc_sin_acentos(word_minusc);
     stemmer.stemmer(word_minusc, tipoStemmer);
-    unordered_map<string, InformacionTermino>::const_iterator it;
-    it = indice.find(word_minusc);
-    if (it != indice.end())
+    if (!almacenarEnDisco)
+    {
+        unordered_map<string, InformacionTermino>::const_iterator it;
+        it = indice.find(word_minusc);
+        if (it != indice.end())
+            return false;
+        indice[word_minusc] = inf;
+        return true;
+    }
+    if (indiceDisco.find(word_minusc) != indiceDisco.end())
         return false;
-    indice[word_minusc] = inf;
+    GestorFicheros::guardarInfoToken(word_minusc, inf);
     return true;
 }
 
@@ -614,38 +672,71 @@ void IndexadorHash::ListarPalParada() const
 
 void IndexadorHash::ListarTerminos() const
 {
-    unordered_map<string, InformacionTermino>::const_iterator it;
-    it = indice.begin();
-    while (it != indice.end())
+    if (!almacenarEnDisco)
     {
-        cout << it->first << "\t" << it->second << endl;
-        it++;
+        unordered_map<string, InformacionTermino>::const_iterator it;
+        it = indice.begin();
+        while (it != indice.end())
+        {
+            cout << it->first << "\t" << it->second << endl;
+            it++;
+        }
+    }
+    else
+    {
+        for (const string& token : indiceDisco)
+        {
+            InformacionTermino infoToken = GestorFicheros::leerInfoToken(token);
+            cout << token << "\t" << infoToken << endl;
+        }
     }
 }
 
 bool IndexadorHash::ListarTerminos(const std::string &nomDoc) const
 {
-    unordered_map<string, InfDoc>::const_iterator it;
-    it = indiceDocs.find(nomDoc);
-    if (it == indiceDocs.end())
-        return false;
-    long id_doc = it->second.idDoc;
-    for (unordered_map<string, InformacionTermino>::const_iterator it_ind = indice.begin();
-         it_ind != indice.end(); ++it_ind)
+    if (!almacenarEnDisco)
     {
-        if (it_ind->second.l_docs.find(id_doc) != it_ind->second.l_docs.end())
-            cout << it_ind->first << "\t" << it_ind->second << endl;
+        unordered_map<string, InfDoc>::const_iterator it;
+        it = indiceDocs.find(nomDoc);
+        if (it == indiceDocs.end())
+            return false;
+        long id_doc = it->second.idDoc;
+        for (unordered_map<string, InformacionTermino>::const_iterator it_ind = indice.begin();
+            it_ind != indice.end(); ++it_ind)
+        {
+            if (it_ind->second.l_docs.find(id_doc) != it_ind->second.l_docs.end())
+                cout << it_ind->first << "\t" << it_ind->second << endl;
+        }
+        return true;
+    }
+    InfDoc infoDoc = GestorFicheros::leerInfoDoc(nomDoc);
+    if (indiceDocsDisco.find(nomDoc) == indiceDocsDisco.end())
+        return false;
+    for (const string& token : indiceDisco)
+    {
+        InformacionTermino infoToken = GestorFicheros::leerInfoToken(token);
+        unordered_map<long int, InfTermDoc>::const_iterator it = infoToken.l_docs.find(infoDoc.idDoc);
+        if (it != infoToken.l_docs.end())
+            cout << token << "\t" << infoToken << endl;
     }
     return true;
 }
 
 bool IndexadorHash::ListarDocs(const std::string& nomDoc) const
 {
-    unordered_map<string, InfDoc>::const_iterator it;
-    it = indiceDocs.find(nomDoc);
-    if (it == indiceDocs.end())
+    if (!almacenarEnDisco)
+    {
+        unordered_map<string, InfDoc>::const_iterator it;
+        it = indiceDocs.find(nomDoc);
+        if (it == indiceDocs.end())
+            return false;
+        cout << nomDoc << "\t" << it->second << endl;
+        return true;
+    }
+    if (indiceDocsDisco.find(nomDoc) == indiceDocsDisco.end())
         return false;
-    cout << nomDoc << "\t" << it->second << endl;
+    InfDoc infoDoc = GestorFicheros::leerInfoDoc(nomDoc);
+    cout << nomDoc << "\t" << infoDoc << endl;
     return true;
 }
 
@@ -917,9 +1008,249 @@ void GestorFicheros::leer(IndexadorHash& index, std::fstream& fichero_entrada)
 }
 
 
+//VERSIÓN QUE GUARDA EL ÍNDICE EN MEMORIA SECUNDARIA
 
+InformacionTermino GestorFicheros::leerInfoToken(const std::string & token)
+{
+    string fichero = IndexadorHash::DIRECTORIO_INDICE_DISCO + token;
+    fstream fichero_entrada(fichero, ios::binary | ios::in);
+    InformacionTermino info;
+    leer(info, fichero_entrada);
+    fichero_entrada.close();
+    return info;
+}
 
+InfDoc GestorFicheros::leerInfoDoc(const std::string & nombreDoc)
+{
+    string fichero = IndexadorHash::DIRECTORIO_INDICE_DOCS_DISCO + nombreDoc;
+    fstream fichero_entrada(fichero, ios::binary | ios::in);
+    InfDoc info;
+    fichero_entrada.read((char*) &info, sizeof(InfDoc));
+    fichero_entrada.close();
+    return info;
+}
 
+InformacionTermino GestorFicheros::guardarInfoToken(const string& token, const InformacionTermino& info)
+{
+    string fichero = "aqui.info";
+    // string fichero = IndexadorHash::DIRECTORIO_INDICE_DISCO + token;
+    fstream fichero_salida(fichero, ios::binary | ios::out | ios::trunc);
+    guardar(info, fichero_salida);
+    fichero_salida.close();
+}
 
+InfDoc GestorFicheros::guardarInfoDoc(const string& nombreDoc, const InfDoc & info)
+{
+    string fichero = IndexadorHash::DIRECTORIO_INDICE_DOCS_DISCO + nombreDoc;
+    fstream fichero_salida(fichero, ios::binary | ios::out | ios::trunc);
+    fichero_salida.write((const char*) &info, sizeof(InfDoc));
+    fichero_salida.close();
+}
 
+void IndexadorHash::ImprimirIndexacion_disco() const
+{
+    cout << "Terminos indexados: " << endl;
+    for (const string& fila : indiceDisco)
+    {
+        InformacionTermino info = GestorFicheros::leerInfoToken(fila);
+        cout << fila << "\t" << info << endl;
+    }
+    for (const string& fila : indiceDocsDisco)
+    {
+        InfDoc info = GestorFicheros::leerInfoDoc(fila);
+        cout << fila << "\t" << info << endl;
+    }
+}
 
+bool IndexadorHash::GuardarIndexacion_disco() const
+{
+    return false;
+    // if (!Tokenizador::is_dir(directorioIndice))
+    // {
+    //     if (mkdir(directorioIndice.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == -1)
+    //     {
+    //         cerr << "ERROR: el directorio " << directorioIndice << " no se pudo crear" << endl;
+    //         return false;
+    //     }
+    // }
+    // fstream fichero_salida(directorioIndice + "/" + FICHERO_BINARIO_INDICE, ios::out | ios::binary);
+    // if (fichero_salida.is_open())
+    // {
+    //     unsigned numTokens = indiceDisco.size();
+    //     fichero_salida.write((const char*) &numTokens, sizeof(unsigned));
+    //     for (const string& token : indiceDisco)
+    //     {
+    //         InformacionTermino info = GestorFicheros::leerInfoToken(token);
+    //         GestorFicheros::guardar(info, fichero_salida);
+    //     }
+    //     unsigned numDocs = indiceDocsDisco.size();
+    //     fichero_salida.write((const char*) &numDocs, sizeof(unsigned));
+    //     for (const string& ficheroDoc : indiceDocsDisco)
+    //     {
+    //         InfDoc info = GestorFicheros::leerInfoDoc(ficheroDoc);
+    //         fichero_salida.write((const char*) &info, sizeof(InfDoc));
+    //     }
+    //     GestorFicheros::guardar(indicePregunta, fichero_salida);
+    //     GestorFicheros::guardar(stopWords, fichero_salida);
+    //     GestorFicheros::guardar(tok, fichero_salida);
+    //     GestorFicheros::guardar(pregunta, fichero_salida);
+    //     GestorFicheros::guardar(ficheroStopWords, fichero_salida);
+    //     GestorFicheros::guardar(directorioIndice, fichero_salida);
+    //     fichero_salida.write((const char *)&informacionColeccionDocs, sizeof(InfColeccionDocs));
+    //     fichero_salida.write((const char *)&infPregunta, sizeof(InformacionPregunta));
+    //     fichero_salida.write((const char *)&tipoStemmer, sizeof(int));
+    //     fichero_salida.write((const char *)&almacenarEnDisco, sizeof(bool));
+    //     fichero_salida.write((const char *)&almacenarPosTerm, sizeof(bool));
+    //     fichero_salida.close();
+    // }
+    // else
+    // {
+    //     cerr << "ERROR: no se pudo crear el fichero índice: " << FICHERO_BINARIO_INDICE << endl;
+    //     return false;
+    // }
+    // return true;
+}
+
+bool IndexadorHash::BorraDoc_disco(const std::string &nomDoc)
+{
+    if (indiceDocsDisco.find(nomDoc) == indiceDocsDisco.end())
+        return false;
+    list<string> tokens_vacios;
+    InfDoc infoDoc = GestorFicheros::leerInfoDoc(nomDoc);
+    for (const string& token : indiceDisco)
+    {
+        InformacionTermino info = GestorFicheros::leerInfoToken(token);
+        unordered_map<long int, InfTermDoc>::iterator it_doc = info.l_docs.find(infoDoc.idDoc);
+        if (it_doc != info.l_docs.end())
+        {
+            info.ftc--;
+            if (!info.ftc)
+                tokens_vacios.push_back(token);
+            info.l_docs.erase(infoDoc.idDoc);
+            GestorFicheros::guardarInfoToken(token, info);
+        }
+    }
+    informacionColeccionDocs.numTotalPal -= infoDoc.numPal;
+    informacionColeccionDocs.numTotalPalSinParada -= infoDoc.numPalSinParada;
+    informacionColeccionDocs.tamBytes -= infoDoc.tamBytes;
+    for (const string &token : tokens_vacios)
+    {
+        string cmd = "rm " + DIRECTORIO_INDICE_DISCO + token;
+        system(cmd.c_str());
+        indiceDisco.erase(token);
+        informacionColeccionDocs.numTotalPalDiferentes--;
+    }
+    indiceDocsDisco.erase(nomDoc);
+    string cmd = "rm " + DIRECTORIO_INDICE_DOCS_DISCO + nomDoc;
+    system(cmd.c_str());
+    informacionColeccionDocs.numDocs--;
+    return true;
+}
+
+bool IndexadorHash::indexar_documento_disco(const string &nombreDoc)
+{
+    indiceDocsDisco.insert(nombreDoc);
+    InfDoc infDoc;
+    return indexar_documento_disco(infDoc, nombreDoc);
+}
+
+void IndexadorHash::actualizar_indice_disco(const string &token, InfDoc &infdoc, int posTerm)
+{
+    infdoc.numPalSinParada++;
+    InformacionTermino infoTerm;
+    unordered_set<string>::iterator it;
+    it = indiceDisco.find(token);
+    if (it == indiceDisco.end())
+    {
+        informacionColeccionDocs.numTotalPalDiferentes++;
+        it = indiceDisco.insert(token).first;
+    }
+    else
+        infoTerm = GestorFicheros::leerInfoToken(token);
+    infoTerm.ftc++;
+
+    unordered_map<long, InfTermDoc>::iterator it_doc;
+    it_doc = infoTerm.l_docs.find(infdoc.idDoc);
+    if (it_doc == infoTerm.l_docs.end())
+    {
+        infdoc.numPalDiferentes++;
+        it_doc = infoTerm.l_docs.emplace(infdoc.idDoc, InfTermDoc()).first;
+    }
+    it_doc->second.ft++;
+    if (almacenarPosTerm)
+        it_doc->second.posTerm.push_back(posTerm);
+    GestorFicheros::guardarInfoToken(token, infoTerm);
+}
+
+bool IndexadorHash::indexar_documento_disco(InfDoc &infDoc, const string &nombreDoc)
+{
+    try
+    {
+        int posTerm = -1;
+        char *tokens = tok.TokenizarFichero(nombreDoc);
+        unsigned tokens_it = 0;
+        while (tokens[tokens_it] != '\0')
+        {
+            string token = "";
+            while (tokens[tokens_it] != 30)
+            {
+                token += tokens[tokens_it];
+                tokens_it++;
+            }
+            if (token.length() == 0)
+                break;
+            stemmer.stemmer(token, tipoStemmer);
+            tokens_it++;
+            infDoc.numPal++;
+            posTerm++;
+            if (stopWords.find(token) != stopWords.end())
+                continue;
+            informacionColeccionDocs.numTotalPalSinParada++;
+            actualizar_indice_disco(token, infDoc, posTerm);
+        }
+        infDoc.tamBytes = get_file_size(nombreDoc);
+        informacionColeccionDocs.tamBytes += infDoc.tamBytes;
+        informacionColeccionDocs.numTotalPal += infDoc.numPal;
+        free(tokens);
+        GestorFicheros::guardarInfoDoc(nombreDoc, infDoc);
+    }
+    catch (bad_alloc &e)
+    {
+        cerr << "ERROR: falta de memoria al indexar " << nombreDoc << endl;
+        return false;
+    }
+    return true;
+}
+
+bool IndexadorHash::Indexar_disco(const string &ficheroDocumentos)
+{
+    ifstream in_file(ficheroDocumentos);
+    if (in_file.is_open())
+    {
+        string nombreDoc;
+        while (getline(in_file, nombreDoc))
+        {
+            unordered_set<string>::iterator iterador = indiceDocsDisco.find(nombreDoc);
+            if (iterador != indiceDocsDisco.end())
+            {
+                InfDoc infoDoc = GestorFicheros::leerInfoDoc(nombreDoc);
+                if (ultima_modificacion(nombreDoc) > infoDoc.fechaModificacion)
+                {
+                    BorraDoc_disco(nombreDoc);
+                    indexar_documento_disco(infoDoc, nombreDoc);
+                }
+            }
+            else
+                indexar_documento_disco(nombreDoc);
+        }
+        in_file.close();
+    }
+    else
+    {
+        cerr << "ERROR: no existe el fichero " << ficheroDocumentos << endl;
+        return false;
+    }
+    return true;
+}
+
+//FIN VERSIÓN QUE USA ALMACENAMIENTO SECUNDARIO
