@@ -292,7 +292,7 @@ void Tokenizador::Tokenizar_fichero_especial(const char* mapa_entrada, char* map
                 estado.escribir_token(estado.iterador_entrada_izquierda, estado.iterador_entrada_derecha - 1);
                 estado.mapa_salida[estado.iterador_salida] = estado.current_char;
                 estado.iterador_salida++;
-                estado.mapa_salida[estado.iterador_salida] = '\n';
+                estado.mapa_salida[estado.iterador_salida] = 30;
                 estado.iterador_salida++;
                 mapa_salida[estado.iterador_salida] = '\0';
                 return;
@@ -326,7 +326,7 @@ void EstadoChar::escribir_token(const size_t inicio, const size_t final)
                 mapa_salida[iterador_salida] = mapa_entrada[i];
             iterador_salida++;
         }
-        mapa_salida[iterador_salida] = '\n';
+        mapa_salida[iterador_salida] = 30;
         iterador_salida++;
     }
 }
@@ -450,7 +450,7 @@ void EstadoChar::siguiente_decimal()
         escribir_token(iterador_entrada_izquierda, iterador_entrada_derecha - 1);
         mapa_salida[iterador_salida] = '%';
         iterador_salida++;
-        mapa_salida[iterador_salida] = '\n';
+        mapa_salida[iterador_salida] = 30;
         iterador_salida++;
         iterador_entrada_izquierda = iterador_entrada_derecha + 1;
     }
@@ -460,7 +460,7 @@ void EstadoChar::siguiente_decimal()
         escribir_token(iterador_entrada_izquierda, iterador_entrada_derecha - 1);
         mapa_salida[iterador_salida] = '$';
         iterador_salida++;
-        mapa_salida[iterador_salida] = '\n';
+        mapa_salida[iterador_salida] = 30;
         iterador_salida++;
         iterador_entrada_izquierda = iterador_entrada_derecha + 1;
     }
