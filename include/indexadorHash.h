@@ -22,6 +22,9 @@ class IndexadorHash
         const static std::string FICHERO_BINARIO_INDICE;
         IndexadorHash();
         //VERSIÓN QUE USA ALMACENAMIENTO SECUNDARIO
+        static const uint32_t Prime = 0x01000193; //   16777619
+        static const uint32_t Seed = 0x811C9DC5;  // 2166136261
+        static inline uint32_t fnv1a(const char *, uint32_t);
         static const std::string DIRECTORIO_INDICE_DISCO;
         static const std::string DIRECTORIO_INDICE_DOCS_DISCO;
         std::unordered_set<std::string> indiceDisco;

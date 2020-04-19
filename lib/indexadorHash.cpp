@@ -19,6 +19,14 @@ const string IndexadorHash::FICHERO_BINARIO_INDICE = "indice.bin";
 const string IndexadorHash::DIRECTORIO_INDICE_DISCO = "./indiceLocal/indice/";
 const string IndexadorHash::DIRECTORIO_INDICE_DOCS_DISCO = "./indiceLocal/indiceDocs/";
 
+inline uint32_t IndexadorHash::fnv1a(const char *text, uint32_t hash = Seed)
+{
+    const unsigned char *ptr = (const unsigned char *)text;
+    while (*ptr)
+        hash = (*ptr++ ^ hash) * Prime;
+    return hash;
+}
+
 size_t IndexadorHash::get_file_size(const string& filename)
 {
     off_t file_size;
@@ -1022,7 +1030,8 @@ void GestorFicheros::leer(IndexadorHash& index, std::fstream& fichero_entrada)
 
 InformacionTermino GestorFicheros::leerInfoToken(const std::string & token)
 {
-    string fichero = IndexadorHash::DIRECTORIO_INDICE_DISCO + token;
+    string nombreFichero = to_string(IndexadorHash::fnv1a(token.c_str()));
+    string fichero = IndexadorHash::DIRECTORIO_INDICE_DISCO + nombreFichero;
     fstream fichero_entrada(fichero, ios::binary | ios::in);
     InformacionTermino info;
     leer(info, fichero_entrada);
@@ -1032,8 +1041,7 @@ InformacionTermino GestorFicheros::leerInfoToken(const std::string & token)
 
 InfDoc GestorFicheros::leerInfoDoc(const std::string & nombreDoc)
 {
-    string nombreDocFormat = nombreDoc;
-    replace(nombreDocFormat.begin(), nombreDocFormat.end(), '/', '_');
+    string nombreDocFormat = to_string(IndexadorHash::fnv1a(nombreDoc.c_str()));
     string fichero = IndexadorHash::DIRECTORIO_INDICE_DOCS_DISCO + nombreDocFormat;
     fstream fichero_entrada(fichero, ios::binary | ios::in);
     InfDoc info;
@@ -1044,7 +1052,8 @@ InfDoc GestorFicheros::leerInfoDoc(const std::string & nombreDoc)
 
 void GestorFicheros::guardarInfoToken(const string &token, const InformacionTermino &info)
 {
-    string fichero = IndexadorHash::DIRECTORIO_INDICE_DISCO + token;
+    string nombreFichero = to_string(IndexadorHash::fnv1a(token.c_str()));
+    string fichero = IndexadorHash::DIRECTORIO_INDICE_DISCO + nombreFichero;
     fstream fichero_salida(fichero, ios::binary | ios::out | ios::trunc);
     guardar(info, fichero_salida);
     fichero_salida.close();
@@ -1052,8 +1061,7 @@ void GestorFicheros::guardarInfoToken(const string &token, const InformacionTerm
 
 void GestorFicheros::guardarInfoDoc(const string& nombreDoc, const InfDoc & info)
 {
-    string nombreDocFormat = nombreDoc;
-    replace(nombreDocFormat.begin(), nombreDocFormat.end(), '/', '_');
+    string nombreDocFormat = to_string(IndexadorHash::fnv1a(nombreDoc.c_str()));
     string fichero = IndexadorHash::DIRECTORIO_INDICE_DOCS_DISCO + nombreDocFormat;
     fstream fichero_salida(fichero, ios::binary | ios::out | ios::trunc);
     fichero_salida.write((const char*) &info, sizeof(InfDoc));
