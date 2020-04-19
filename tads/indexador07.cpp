@@ -6,16 +6,19 @@
 
 using namespace std;
 
-///////////////////////////////////////////
-// Igual que el indexador04.cpp pero almacenando información en disco duro
-///////////////////////////////////////////
-
 int
 main(void)
 {
-IndexadorHash a("./StopWordsEspanyol.txt", ". ,:", false, false, "./indicePrueba", 0, true, true);
+IndexadorHash b("./StopWordsEspanyol.txt", ". ,:", false, false, "./indicePrueba", 0, false, true);
 
-a.Indexar("./listaFicheros_corto.txt");
+b.Indexar("./listaFicheros_corto.txt");
+
+IndexadorHash a(b);
+
+cout << a.DevolverDelimitadores () << endl; 
+cout << a.DevolverDirIndice () << endl; 
+cout << a.DevolverTipoStemming () << endl; 
+cout << a.DevolverAlmEnDisco () << endl; 
 
 InformacionTermino inf1;
 

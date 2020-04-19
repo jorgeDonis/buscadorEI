@@ -18,6 +18,7 @@ class Tokenizador
         std::string delimiters;
         //delimiters_set[i] = 1 si el caracter i es delimitador. De lo contrario, 0.        
         short delimiters_set[256] = {0};
+        short delimiters_set_plus_null[256] = {0};
         bool casosEspeciales;
         bool pasarAminuscSinAcentos;
         void copy_values(const Tokenizador&);

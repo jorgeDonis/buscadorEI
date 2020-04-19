@@ -118,7 +118,11 @@ Tokenizador::Tokenizador()
 {
     delimiters = Tokenizador::DEFAULT_DELIMITERS;
     for (const char& c : delimiters)
+    {
         delimiters_set[(unsigned char) c] = 1;
+        delimiters_set_plus_null[(unsigned char) c] = 1;
+    }
+    delimiters_set_plus_null[(unsigned char) '\000'] = 1;
     casosEspeciales = Tokenizador::CASOS_ESPECIALES_DEFAULT;
     pasarAminuscSinAcentos = Tokenizador::PASAR_MINUSC_DEFAULT;
 }
@@ -130,7 +134,11 @@ Tokenizador::Tokenizador(const string& delimitadoresPalabra, const bool& kCasosE
     delimiters = delimitadoresPalabra;
     remove_duplicate_string(delimiters);
     for (const char &c : delimiters)
+    {
         delimiters_set[(unsigned char) c] = 1;
+        delimiters_set_plus_null[(unsigned char) c] = 1;
+    }
+    delimiters_set_plus_null[(unsigned char) '\000'] = 1;
     casosEspeciales = kCasosEspeciales;
     pasarAminuscSinAcentos = minuscSinAcentos;
 }
@@ -139,7 +147,10 @@ void Tokenizador::copy_values(const Tokenizador& tokenizador)
 {
     this->delimiters = tokenizador.delimiters;
     for (unsigned i = 0; i < 256; i++)
+    {
+        delimiters_set_plus_null[i] = tokenizador.delimiters_set_plus_null[i];
         delimiters_set[i] = tokenizador.delimiters_set[i];
+    }
     this->pasarAminuscSinAcentos = tokenizador.pasarAminuscSinAcentos;
     this->casosEspeciales = tokenizador.casosEspeciales;
 }
@@ -169,9 +180,16 @@ void Tokenizador::DelimitadoresPalabra(const string& delimitadores)
     delimiters = delimitadores;
     remove_duplicate_string(delimiters);
     for (int i = 0; i < 256; i++)
+    {
         delimiters_set[i] = 0;
+        delimiters_set_plus_null[i] = 0;
+    }
     for (const char &c : delimiters)
+    {
         delimiters_set[(unsigned char) c] = 1;
+        delimiters_set_plus_null[(unsigned char)c] = 1;
+    }
+    delimiters_set_plus_null[(unsigned char) '\000'] = 1;
 }
 
 void Tokenizador::AnyadirDelimitadoresPalabra(const string& delimitadores_extra)
@@ -182,6 +200,7 @@ void Tokenizador::AnyadirDelimitadoresPalabra(const string& delimitadores_extra)
         {
             delimiters += nuevo_delimitador;
             delimiters_set[(unsigned char) nuevo_delimitador] = 1;
+            delimiters_set_plus_null[(unsigned char)nuevo_delimitador] = 1;
         }
     }
 }
@@ -191,11 +210,20 @@ void Tokenizador::AnyadirDelimitadoresPalabra(const string& delimitadores_extra)
  * 
  * @param input_filename Fichero sobre el que se har� mmap
  * @return char* Tiene reservado tama�o igual que input_filename,
- * Contiene tokens separados por \n y termina en \0 (fin de cadena).
- * Tendr� que ser liberado en un futuro.
+ * Contiene tokens separados por 30 (record separator) y termina en \0
+ * (fin de cadena).
+ * Tendr� que ser liberado en un futuro. Se añade /n como delimitador
+ * de-facto
  */
 char* Tokenizador::TokenizarFichero(const string& input_filename)
 {
+    bool hadNewLine = false;
+    string oldDelimiters = delimiters;
+    if (delimiters.find("\n") == string::npos)
+    {
+        AnyadirDelimitadoresPalabra("\n");
+        hadNewLine = true;
+    }
     int ifd = open(input_filename.c_str(), O_RDONLY, (mode_t)0600);
     if (!ifd)
         cerr << "ERROR: error al leer el fichero" << input_filename << endl;
@@ -205,7 +233,7 @@ char* Tokenizador::TokenizarFichero(const string& input_filename)
 
     size_t len = fileInfo.st_size + 1;
 
-    char* output_map = new char[len];
+    char* output_map = (char*) malloc((sizeof(char) * len) + 10);
 
     if (casosEspeciales)
         Tokenizar_fichero_especial(input_map, output_map, len - 1);
@@ -214,6 +242,8 @@ char* Tokenizador::TokenizarFichero(const string& input_filename)
 
     munmap((char *)input_map, fileInfo.st_size);
     close(ifd);
+    if (hadNewLine)
+        DelimitadoresPalabra(oldDelimiters);
     return output_map;
 }
 
@@ -515,14 +545,14 @@ void Tokenizador::Tokenizar_fichero_simple(const char* mapa_entrada, char* mapa_
     size_t it_entrada, it_salida;
     it_entrada = it_salida = 0;
     char c = mapa_entrada[0];
-    while (it_entrada < len - 1)
+    while (it_entrada < len)
     {
         while (is_delimiter(c))
         {
             it_entrada++;
             c = mapa_entrada[it_entrada];
         }
-        while (!is_delimiter(c))
+        while (!delimiters_set_plus_null[(unsigned char) c])
         {
             if (pasarAminuscSinAcentos)
                 mapa_salida[it_salida] = MAPA_ACENTOS[(unsigned char) c];
@@ -532,10 +562,8 @@ void Tokenizador::Tokenizar_fichero_simple(const char* mapa_entrada, char* mapa_
             it_entrada++;
             c = mapa_entrada[it_entrada];
         }
-        mapa_salida[it_salida] = '\n';
+        mapa_salida[it_salida] = 30;
         it_salida++;
-        it_entrada++;
-        c = mapa_entrada[it_entrada];
     }
     mapa_salida[it_salida] = '\0';
 }

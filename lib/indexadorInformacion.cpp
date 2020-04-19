@@ -1,7 +1,7 @@
 #include "indexadorInformacion.h"
 #include <ctime>
 
-long int InfDoc::DOC_ID = 0;
+long int InfDoc::DOC_ID = 1;
 
 using namespace std;
 
@@ -35,11 +35,6 @@ InfTermDoc& InfTermDoc::operator=(const InfTermDoc& foo)
     return *this;
 }
 
-InfTermDoc::~InfTermDoc()
-{
-    posTerm.clear();
-}
-
 ostream& operator<<(ostream& os, const InformacionTermino& it)
 {
     os << "Frecuencia total: " << it.ftc << "\tfd: " << it.l_docs.size();
@@ -58,11 +53,6 @@ void InformacionTermino::copy_vals(const InformacionTermino& foo)
 InformacionTermino::InformacionTermino(const InformacionTermino& foo)
 {
     copy_vals(foo);
-}
-
-InformacionTermino::~InformacionTermino()
-{
-    l_docs.clear();
 }
 
 InformacionTermino& InformacionTermino::operator=(const InformacionTermino& foo)
@@ -118,7 +108,7 @@ InfDoc& InfDoc::operator=(const InfDoc& foo)
 ostream& operator<<(ostream& os, const InfColeccionDocs& icd)
 {
     os << "numDocs: " << icd.numDocs << "\tnumTotalPal: " << icd.numTotalPal << "\tnumTotalPalSinParada: " <<
-    icd.numTotalPalSinParada << "\tnumTotalPalDiferentes: " << icd.numTotalPalDiferentes << "\ttamBytes" <<
+    icd.numTotalPalSinParada << "\tnumTotalPalDiferentes: " << icd.numTotalPalDiferentes << "\ttamBytes: " <<
     icd.tamBytes;
     return os;
 }
@@ -177,7 +167,7 @@ InformacionTerminoPregunta& InformacionTerminoPregunta::operator=(const Informac
 ostream& operator<<(ostream& os, const InformacionPregunta& ip)
 {
     os << "numTotalPal: " << ip.numTotalPal << "\tnumTotalPalSinParada: " << ip.numTotalPalSinParada <<
-    "\t numTotalPalDiferentes: " << ip.numTotalPalDiferentes;
+    "\tnumTotalPalDiferentes: " << ip.numTotalPalDiferentes;
     return os;
 }
 
@@ -191,6 +181,9 @@ void InformacionPregunta::copy_vals(const InformacionPregunta& foo)
 InformacionPregunta& InformacionPregunta::operator=(const InformacionPregunta& foo)
 {
     if (&foo != this)
+    {
+        this->~InformacionPregunta();
         copy_vals(foo);
+    }
     return *this;
 }

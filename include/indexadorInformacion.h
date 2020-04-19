@@ -19,8 +19,8 @@ class InfTermDoc
         void copy_vals(const InfTermDoc&);
     public:
         InfTermDoc() {ft = 0;}
+        ~InfTermDoc() {posTerm.clear();}
         InfTermDoc(const InfTermDoc &);
-        ~InfTermDoc();
         InfTermDoc& operator=(const InfTermDoc&);
 };
 
@@ -35,9 +35,8 @@ class InformacionTermino
         std::unordered_map<long int, InfTermDoc> l_docs;
         void copy_vals(const InformacionTermino&);
     public:
-        InformacionTermino() : l_docs() {ftc = 0;}
+        InformacionTermino() {ftc = 0;}
         InformacionTermino(const InformacionTermino&);
-        ~InformacionTermino();
         InformacionTermino& operator=(const InformacionTermino&);
 };
 
@@ -94,8 +93,8 @@ class InformacionTerminoPregunta
         void copy_vals(const InformacionTerminoPregunta&);
     public:
         InformacionTerminoPregunta() {ft = 0;}
-        InformacionTerminoPregunta(const InformacionTerminoPregunta& foo) {copy_vals(foo);}
         ~InformacionTerminoPregunta() {posTerm.clear();}
+        InformacionTerminoPregunta(const InformacionTerminoPregunta& foo) {copy_vals(foo);}
         InformacionTerminoPregunta& operator=(const InformacionTerminoPregunta&);
 };
 

@@ -17,11 +17,24 @@ class IndexadorHash
     friend class Debugger;
     private:
         static size_t get_file_size(const std::string&);
-        static std::string NOMBRE_FICHERO_MAPA_INDICE;
         const static std::string NOMBRE_LISTA_FICHEROS;
         const static size_t MAX_PATHNAME_LEN = 256;
         const static std::string FICHERO_BINARIO_INDICE;
         IndexadorHash();
+        //VERSIÓN QUE USA ALMACENAMIENTO SECUNDARIO
+        static const std::string DIRECTORIO_INDICE_DISCO;
+        static const std::string DIRECTORIO_INDICE_DOCS_DISCO;
+        std::unordered_set<std::string> indiceDisco;
+        std::unordered_set<std::string> indiceDocsDisco;
+        static void crear_directorios_indice();
+        void ImprimirIndexacion_disco() const;
+        bool GuardarIndexacion_disco() const;
+        bool BorraDoc_disco(const std::string& nomDoc);
+        void actualizar_indice_disco(const string &token, InfDoc &, int);
+        bool indexar_documento_disco(const string &);
+        bool indexar_documento_disco(InfDoc &, const string &);
+        bool Indexar_disco(const std::string &ficheroDocumentos);
+        //FIN VERSIÓN QUE USA ALMACENAMIENTO SECUNDARIO
         std::unordered_map<std::string, InformacionTermino> indice;
         std::unordered_map<std::string, InfDoc> indiceDocs;
         std::unordered_map<std::string, InformacionTerminoPregunta> indicePregunta;
@@ -40,7 +53,6 @@ class IndexadorHash
         void actualizar_indice(const string& token, InfDoc&, int);
         bool indexar_documento(const string&);
         bool indexar_documento(InfDoc&, const string&);
-        void guardar_mapa_indice() const; //TODO
         void copy_vals(const IndexadorHash&);
         /**
          * @brief Actualiza los atributos ficheroStopWords y stopWords
@@ -79,7 +91,7 @@ class IndexadorHash
         bool Borra(const std::string& word);
         bool BorraDoc(const std::string& nomDoc);
         void VaciarIndiceDocs() {indiceDocs.clear();}
-        void VaciarIndicePreg() {indicePregunta.clear();}
+        void VaciarIndicePreg();
         bool Actualiza(const std::string& word, const InformacionTermino& inf);
         bool Inserta(const std::string& word, const InformacionTermino& inf);
         int NumPalIndexadas() const {return indice.size();}
@@ -111,7 +123,7 @@ class IndexadorHash
  */
 class GestorFicheros
 {
-    private:
+    public:
         static void guardar(const std::string& foo, std::fstream& fichero_salida)
         {
             unsigned long int tam_string = foo.size() + 1;
@@ -127,7 +139,6 @@ class GestorFicheros
             foo = string(foo_str);
             free(foo_str);
         }
-    public:
         static void guardar(const InfTermDoc&, std::fstream&);
         static void leer(InfTermDoc&, std::fstream&);
         static void guardar(const InformacionTermino&, std::fstream&);
@@ -146,6 +157,10 @@ class GestorFicheros
         static void leer(Tokenizador&, std::fstream&);
         static void guardar(const IndexadorHash&, std::fstream&);
         static void leer(IndexadorHash&, std::fstream&);
+        static InformacionTermino leerInfoToken(const std::string&);
+        static InfDoc leerInfoDoc(const std::string &);
+        static void guardarInfoToken(const std::string&, const InformacionTermino &);
+        static void guardarInfoDoc(const std::string&, const InfDoc &info);
 };
 
 
