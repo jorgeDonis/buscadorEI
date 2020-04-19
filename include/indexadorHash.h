@@ -26,6 +26,7 @@ class IndexadorHash
         static const std::string DIRECTORIO_INDICE_DOCS_DISCO;
         std::unordered_set<std::string> indiceDisco;
         std::unordered_set<std::string> indiceDocsDisco;
+        static void crear_directorios_indice();
         void ImprimirIndexacion_disco() const;
         bool GuardarIndexacion_disco() const;
         bool BorraDoc_disco(const std::string& nomDoc);
@@ -158,8 +159,8 @@ class GestorFicheros
         static void leer(IndexadorHash&, std::fstream&);
         static InformacionTermino leerInfoToken(const std::string&);
         static InfDoc leerInfoDoc(const std::string &);
-        static InformacionTermino guardarInfoToken(const std::string&, const InformacionTermino &);
-        static InfDoc guardarInfoDoc(const std::string&, const InfDoc &info);
+        static void guardarInfoToken(const std::string&, const InformacionTermino &);
+        static void guardarInfoDoc(const std::string&, const InfDoc &info);
 };
 
 

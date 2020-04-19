@@ -181,6 +181,9 @@ void InformacionPregunta::copy_vals(const InformacionPregunta& foo)
 InformacionPregunta& InformacionPregunta::operator=(const InformacionPregunta& foo)
 {
     if (&foo != this)
+    {
+        this->~InformacionPregunta();
         copy_vals(foo);
+    }
     return *this;
 }
