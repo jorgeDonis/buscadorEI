@@ -290,7 +290,7 @@ bool IndexadorHash::indexar_documento(const string& nombreDoc)
     return indexar_documento(it.first->second, nombreDoc);
 }
 
-void IndexadorHash::actualizar_indice(const string& token, InfDoc& infdoc, int posTerm)
+inline void IndexadorHash::actualizar_indice(const string& token, InfDoc& infdoc, int posTerm)
 {
     infdoc.numPalSinParada++;
     unordered_map<string, InformacionTermino>::iterator it;

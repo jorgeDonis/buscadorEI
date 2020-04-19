@@ -53,7 +53,7 @@ class IndexadorHash
         bool almacenarPosTerm;
         stemmerPorter stemmer;
         void actualizar_indice_pregunta(const std::string&, size_t);
-        void actualizar_indice(const string& token, InfDoc&, int);
+        inline void actualizar_indice(const string& token, InfDoc&, int);
         bool indexar_documento(const string&);
         bool indexar_documento(InfDoc&, const string&);
         void copy_vals(const IndexadorHash&);
