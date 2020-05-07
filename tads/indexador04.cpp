@@ -6,14 +6,10 @@
 
 using namespace std;
 
-///////////////////////////////////////////
-// Igual que el indexador04.cpp pero almacenando información en disco duro
-///////////////////////////////////////////
-
 int
 main(void)
 {
-IndexadorHash a("./StopWordsEspanyol.txt", ". ,:", false, false, "./indicePrueba", 0, true, true);
+IndexadorHash a("./StopWordsEspanyol.txt", ". ,:", false, false, "./indicePrueba", 0, false, true);
 
 a.Indexar("./listaFicheros_corto.txt");
 

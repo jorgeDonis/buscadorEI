@@ -1,14 +1,8 @@
-#!/bin/bash 
-
-for file in FicherosPruebaTokenizador/*
+#!/bin/bash
+for file in ./tads/*.cpp
 do
-    if [[ $file == *".cpp" ]]; then
-        cp $file src/main.cpp
-        echo [Testing] $file
-        make
-        ./practica1 > temp.out
-        out_filename="$file.sal"
-        diff temp.out $out_filename
-        rm temp.out
-    fi
+    cp $file ./src/main.cpp
+    make
+    ./indexador > ./tads/.temp.salida
+    colordiff ./tads/.temp.salida "${file/.cpp/.cpp.sal}"
 done

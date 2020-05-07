@@ -1,16 +1,8 @@
 # buscadorEI
+Buscador sobre un corpus estático
 
-Buscador realizado para la asignatura Explotación de la Infromación del Departamento de Lenguajes y Sistemas Informáticos
-de la Escuela Politécnica Superior.
+## Indexador
 
-Se compone de: 
-* **Crawler**: No implementado. Se trabaja sobre un corpus estático. Podría ser **wget**.
-* **Tokenizador**: Separa una cadena en distintas palabras o unidades mínimas de información (URL's, multipalabras...).
-* **Indexador**: Construye un índice con el corpus que almacena el número de ocurrencias de cada token en cada documento.
-* **Buscador**: Encuentra el resultado más relevante basándose en el índice previamente construido.
-
-## Autómata del tokenizador
-![tokenizador](https://raw.githubusercontent.com/jorgeDonis/buscadorEI/master/diagrama_tokenizador.png?token=ALLEA2TVUTGQ2ILMM7VBFAS6MEOEO "Autómata tokenizador")
-
-### Mapeado de memoria
-[Gist](https://gist.github.com/marcetcheverry/991042)
+El propósito es leer una lista de tokens (tokenizada con *Tokenizador*) y generar un índice que contenga
+distintas frecuencias de aparación en relación con los términos y el corpus. El índice ha de ser leído con posterioridad
+de manera muy rápida, con lo que se emplea una tabla hash.
