@@ -551,6 +551,7 @@ bool IndexadorHash::Devuelve(const string& word, InformacionTermino& inf)
     if (indiceDisco.find(word_minusc) == indiceDisco.end())
         return false;
     inf = GestorFicheros::leerInfoToken(word_minusc);
+    return true;
 }
 
 bool IndexadorHash::Devuelve(const string& word, const string& nomDoc, InfTermDoc& infDoc)
