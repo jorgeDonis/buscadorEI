@@ -137,6 +137,7 @@ IndexadorHash::IndexadorHash(const std::string &fichStopWords, const std::string
                              , stemmer(), indiceDocs(), infPregunta(), indiceDisco(), indiceDocsDisco()
 {
     tok.DelimitadoresPalabra(tok.delimiters);
+    tipoStemmer = tStemmer;
     if (leer_fichero_stopwords(fichStopWords, minuscSinAcentos))
     {
         if (dirIndice == "")
@@ -147,7 +148,6 @@ IndexadorHash::IndexadorHash(const std::string &fichStopWords, const std::string
         }
         else
             directorioIndice = dirIndice;
-        tipoStemmer = tStemmer;
         almacenarEnDisco = almEnDisco;
         almacenarPosTerm = almPosTerm;
     }
