@@ -88,6 +88,7 @@ class IndexadorHash
         void ImprimirIndexacion() const;
         void ImprimirIndexacionPregunta() const;
         void ImprimirPregunta() const;
+        std::string Pregunta() const { return pregunta; }
         bool Devuelve(const std::string& word, InformacionTermino& inf);
         bool Devuelve(const std::string& word, const std::string& nomDoc, InfTermDoc& InfDoc);
         bool Existe(const std::string& word);
