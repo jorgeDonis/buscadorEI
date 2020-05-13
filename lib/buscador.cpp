@@ -1,11 +1,13 @@
 #include "buscador.h"
 #include <vector>
+#include <fstream>
 
 using namespace std;
 
 const float Buscador::DEFAULT_B = 0.75;
 const float Buscador::DEFAULT_C = 2;
 const float Buscador::DEFAULT_K1 = 1.2;
+const int Buscador::DEFAULT_FORM_SIMILITUD = 0;
 
 ostream& operator<<(ostream& os, const ResultadoRI& res){
     os << res.vSimilitud << "\t\t" << res.idDoc << "\t" << res.numPregunta << endl;
@@ -60,6 +62,14 @@ bool ResultadoRI::operator<(const ResultadoRI &lhs) const
         return (vSimilitud < lhs.vSimilitud);
     else
         return (numPregunta > lhs.numPregunta);
+}
+
+Buscador::Buscador()
+{
+    formSimilitud = Buscador::DEFAULT_FORM_SIMILITUD;
+    k1 = Buscador::DEFAULT_K1;
+    b = Buscador::DEFAULT_B;
+    c = Buscador::DEFAULT_C
 }
 
 Buscador::Buscador(const string& directorioIndexacion, const int& f) : IndexadorHash(directorioIndexacion)
@@ -124,9 +134,37 @@ void Buscador::ImprimirResultadoBusqueda(const int& numDocumentos)
         if (!res.NumPregunta())
             cout << Pregunta() << " ";
         else
-            cout << "ConjuntoDePreguntas";
+            cout << "ConjuntoDePreguntas" << endl;
         docs_impresos++;
     }
     docsOrdenados = copiaCola;
 }
 
+bool Buscador::ImprimirResultadoBusqueda(const string& nombreFichero, const int &numDocumentos)
+{
+    //TODO optimizar con mmap
+    ofstream ficheroSalida(nombreFichero);
+    size_t docs_impresos = 0;
+    priority_queue<ResultadoRI> copiaCola = docsOrdenados;
+    while (docsOrdenados.size() != 0 || docs_impresos == numDocumentos)
+    {
+        ResultadoRI res = docsOrdenados.top();
+        docsOrdenados.pop();
+        ficheroSalida << res.NumPregunta() << " ";
+        if (formSimilitud)
+            ficheroSalida << "BM25 ";
+        else
+            ficheroSalida << "DFR ";
+        ficheroSalida << res.NombreDoc() << " ";
+        ficheroSalida << docs_impresos << " ";
+        ficheroSalida << res.VSimilitud() << " ";
+        if (!res.NumPregunta())
+            ficheroSalida << Pregunta() << " ";
+        else
+            ficheroSalida << "ConjuntoDePreguntas" << endl;
+        docs_impresos++;
+    }
+    docsOrdenados = copiaCola;
+    ficheroSalida.close();
+    return true;
+}
