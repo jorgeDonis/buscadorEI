@@ -15,6 +15,8 @@ ostream& operator<<(ostream& s, const InfTermDoc& p)
 
 void InfTermDoc::copy_vals(const InfTermDoc& foo)
 {
+    bm25_parcial = foo.bm25_parcial;
+    dfr_parcial = foo.dfr_parcial;
     this->ft = foo.ft;
     for (int pos : foo.posTerm)
         this->posTerm.push_back(pos);
@@ -81,10 +83,12 @@ void InfDoc::copy_vals(const InfDoc& foo)
     this->numPalDiferentes = foo.numPalDiferentes;
     this->numPalSinParada = foo.numPalSinParada;
     this->tamBytes = foo.tamBytes;
+    sim_parcial = foo.sim_parcial;
 }
 
 InfDoc::InfDoc()
 {
+    sim_parcial = 0;
     idDoc = InfDoc::DOC_ID++;
     fechaModificacion = time(NULL);
     numPal = numPalDiferentes = numPalSinParada = tamBytes = 0;

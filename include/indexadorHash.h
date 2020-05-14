@@ -15,12 +15,12 @@ class IndexadorHash
     friend std::ostream& operator<<(std::ostream&, const IndexadorHash&);
     friend class GestorFicheros;
     friend class Debugger;
-    private:
+    protected:
+        IndexadorHash();
         static size_t get_file_size(const std::string&);
         const static std::string NOMBRE_LISTA_FICHEROS;
         const static size_t MAX_PATHNAME_LEN = 256;
         const static std::string FICHERO_BINARIO_INDICE;
-        IndexadorHash();
         //VERSIÓN QUE USA ALMACENAMIENTO SECUNDARIO
         static const uint32_t Prime = 0x01000193; //   16777619
         static const uint32_t Seed = 0x811C9DC5;  // 2166136261

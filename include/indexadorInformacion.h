@@ -12,9 +12,12 @@ class InfTermDoc
     friend class IndexadorHash;
     friend class GestorFicheros;
     friend class Debugger;
+    friend class Buscador;
     friend std::ostream& operator<<(std::ostream& s, const InfTermDoc& p);
     private:
         int ft;
+        double dfr_parcial;
+        double bm25_parcial;
         std::list<int> posTerm;
         void copy_vals(const InfTermDoc&);
     public:
@@ -54,6 +57,7 @@ class InfDoc
         int numPalDiferentes;
         int tamBytes;
         time_t fechaModificacion;
+        double sim_parcial; //cálculo parcial de la similitud
         void copy_vals(const InfDoc&);
     public:
         InfDoc();
@@ -64,6 +68,7 @@ class InfDoc
 
 class InfColeccionDocs
 {
+    friend class Buscador;
     friend class IndexadorHash;
     friend class GestorFicheros;
     friend class Debugger;
