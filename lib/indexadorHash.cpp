@@ -108,6 +108,7 @@ void IndexadorHash::copy_vals(const IndexadorHash& foo)
 {
     indice = foo.indice;
     indiceDocs = foo.indiceDocs;
+    nombresDocs = foo.nombresDocs;
     indiceDisco = foo.indiceDisco;
     indiceDocsDisco = foo.indiceDocsDisco;
     informacionColeccionDocs = foo.informacionColeccionDocs;
@@ -287,6 +288,7 @@ bool IndexadorHash::indexar_documento(const string& nombreDoc)
         cerr << "ERROR: falta de memoria al insertar en indiceDocs" << endl;
         return false;
     }
+    nombresDocs[it.first->second.idDoc] = nombreDoc; //necesario para buscar
     return indexar_documento(it.first->second, nombreDoc);
 }
 

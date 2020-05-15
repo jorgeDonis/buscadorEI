@@ -40,6 +40,7 @@ class IndexadorHash
         //FIN VERSIÓN QUE USA ALMACENAMIENTO SECUNDARIO
         std::unordered_map<std::string, InformacionTermino> indice;
         std::unordered_map<std::string, InfDoc> indiceDocs;
+        std::unordered_map<long int, std::string> nombresDocs;
         std::unordered_map<std::string, InformacionTerminoPregunta> indicePregunta;
         std::unordered_set<std::string> stopWords;
         Tokenizador tok;

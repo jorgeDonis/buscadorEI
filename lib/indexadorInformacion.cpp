@@ -83,12 +83,10 @@ void InfDoc::copy_vals(const InfDoc& foo)
     this->numPalDiferentes = foo.numPalDiferentes;
     this->numPalSinParada = foo.numPalSinParada;
     this->tamBytes = foo.tamBytes;
-    sim_parcial = foo.sim_parcial;
 }
 
 InfDoc::InfDoc()
 {
-    sim_parcial = 0;
     idDoc = InfDoc::DOC_ID++;
     fechaModificacion = time(NULL);
     numPal = numPalDiferentes = numPalSinParada = tamBytes = 0;

@@ -13,11 +13,12 @@ class ResultadoRI
     private:
         double vSimilitud;
         long int idDoc;
-        string& nombreDoc; //Nombre sin ruta ni extensión
+        string& nombreDoc; //Referencia al nombre del fichero
         int numPregunta;
         void copy_vals(const ResultadoRI&);
     public:
         ResultadoRI(const double&, const long int&, const int&);
+        ResultadoRI(const double &, const long int &, const int &, string&);
         ResultadoRI(const ResultadoRI&);
         ResultadoRI& operator=(const ResultadoRI&);
         double VSimilitud() const {return vSimilitud;}
@@ -35,7 +36,7 @@ class Buscador: private IndexadorHash
         const static float DEFAULT_B, DEFAULT_C, DEFAULT_K1;
         const static int DEFAULT_FORM_SIMILITUD;
         const static int NUM_PREGUNTAS_TOTAL; // nº de ficheros con una pregunta en cada uno
-        std::vector<std::vector<ResultadoRI>> docsOrdenados; //una lista de resultados para cada pregunta
+        std::vector<ResultadoRI> docsOrdenados;
         size_t numDocsBuscados;
         size_t numDocsImprimir;
         int formSimilitud;

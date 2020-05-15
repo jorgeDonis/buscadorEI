@@ -32,6 +32,7 @@ class InformacionTermino
     friend class IndexadorHash;
     friend class GestorFicheros;
     friend class Debugger;
+    friend class Buscador;
     friend std::ostream& operator<<(std::ostream& s, const InformacionTermino& p);
     private:
         int ftc;
@@ -45,6 +46,7 @@ class InformacionTermino
 
 class InfDoc
 {
+    friend class Buscador;
     friend class IndexadorHash;
     friend class GestorFicheros;
     friend class Debugger;
@@ -57,7 +59,6 @@ class InfDoc
         int numPalDiferentes;
         int tamBytes;
         time_t fechaModificacion;
-        double sim_parcial; //cálculo parcial de la similitud
         void copy_vals(const InfDoc&);
     public:
         InfDoc();
@@ -88,6 +89,7 @@ class InfColeccionDocs
 
 class InformacionTerminoPregunta
 {
+    friend class Buscador;
     friend class GestorFicheros;
     friend class Debugger;
     friend class IndexadorHash;
@@ -105,6 +107,7 @@ class InformacionTerminoPregunta
 
 class InformacionPregunta
 {
+    friend class Buscador;
     friend class GestorFicheros;
     friend class Debugger;
     friend class IndexadorHash;

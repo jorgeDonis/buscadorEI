@@ -38,6 +38,14 @@ ResultadoRI::ResultadoRI(const double & kvSimilitud, const long int & kidDoc, co
     numPregunta = np;
 }
 
+ResultadoRI::ResultadoRI(const double &kvSimilitud, const long int &kidDoc, const int &np, string& nombreFichero)
+    : nombreDoc(nombreFichero)
+{
+    vSimilitud = kvSimilitud;
+    this->idDoc = kidDoc;
+    numPregunta = np;
+}
+
 void ResultadoRI::copy_vals(const ResultadoRI& res)
 {
     vSimilitud = res.vSimilitud;
@@ -79,7 +87,7 @@ Buscador::Buscador()
 
 Buscador::Buscador(const string& directorioIndexacion, const int& f) : IndexadorHash(directorioIndexacion)
 {
-    vector<ResultadoRI> docsOrdenadosPregunta(informacionColeccionDocs.numDocs, ResultadoRI(0, -1, 0));
+    docsOrdenados = vector<ResultadoRI>(informacionColeccionDocs.numDocs, ResultadoRI(0, -1, 0));
     numDocsBuscados = 0;
     numDocsImprimir = 0;
     formSimilitud = f;
@@ -124,11 +132,34 @@ Buscador& Buscador::operator=(const Buscador& bus)
  */
 void Buscador::buscar_pregunta(const size_t& num_pregunta)
 {
+    unordered_map<long int, pair<double, string&>> resultados_parciales;
     for (const pair<string, InformacionTerminoPregunta>& entrada_indice_pregunta : indicePregunta)
     {
         const unordered_map<string, InformacionTermino>::const_iterator it_indice_tok 
         = indice.find(entrada_indice_pregunta.first);
         for (const pair<long int, InfTermDoc>& entrada_l_docs : it_indice_tok->second.l_docs)
+        {
+            unordered_map<long int, pair<double, string&>>::iterator parciales_it =
+            resultados_parciales.find(entrada_l_docs.first);
+            double sim_parcial;
+            if (formSimilitud == 0)
+            {
+                sim_parcial = entrada_indice_pregunta.second.ft / (double) indicePregunta.size();
+                sim_parcial *= entrada_l_docs.second.dfr_parcial;
+            }
+            else
+                sim_parcial = entrada_l_docs.second.bm25_parcial;
+            if (parciales_it == resultados_parciales.end())
+                resultados_parciales.emplace(make_pair(sim_parcial, nombresDocs[entrada_l_docs.first]));
+            else
+                parciales_it->second.first += sim_parcial;
+        }
+    }
+    for (const pair<long int, pair<double, string&>>& fila_similitud : resultados_parciales)
+    {
+        docsOrdenados[numDocsBuscados] = 
+        ResultadoRI(fila_similitud.second.first, fila_similitud.first, num_pregunta, fila_similitud.second.second);
+        numDocsBuscados++;
     }
     sort(docsOrdenados.begin(), docsOrdenados.begin() + numDocsBuscados);
 }
