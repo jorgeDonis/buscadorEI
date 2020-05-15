@@ -43,6 +43,9 @@ class Buscador: private IndexadorHash
         double c;
         double k1;
         double b;
+        void precalcular_bm25();
+        void precalcular_dfr();
+        void precalcular_offline();
         void copy_vals(const Buscador&);
         void buscar_pregunta(const size_t&);
         Buscador();

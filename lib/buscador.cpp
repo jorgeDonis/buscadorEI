@@ -2,6 +2,7 @@
 #include <vector>
 #include <fstream>
 #include <algorithm>
+#include <cmath>
 
 using namespace std;
 
@@ -83,6 +84,38 @@ Buscador::Buscador()
     k1 = Buscador::DEFAULT_K1;
     b = Buscador::DEFAULT_B;
     c = Buscador::DEFAULT_C;
+}
+
+/**
+ * @brief Actualizará para cada InfTermDoc indexado el miembro dfr_parcial.
+ * Éste se corresponde con w_i,d 
+ */
+void Buscador::precalcular_dfr()
+{
+    for (const pair<string, InformacionTermino>& it_indice : indice)
+    {
+        double lambda = (double) it_indice.second.ftc / informacionColeccionDocs.numDocs;
+        for (const pair<unsigned long, InfTermDoc>& it_ldocs : it_indice.second.l_docs)
+        {
+            double avr_ld = informacionColeccionDocs.numTotalPalSinParada / informacionColeccionDocs.numDocs;
+            double ftd = it_ldocs.second.ft;
+            size_t ld = indiceDocs[nombresDocs[it_ldocs.first]].numPalSinParada;
+            double ftd_norm = ftd * log2(1 + (c * avr_ld) / (double) ld);
+            
+        }
+    }
+}
+
+/**
+ * @brief Actualiza los valores de similitud para todos los InfTermDoc
+ * indexados, es decir, las variables dfr_parcial y bm25_parcial. En el caso
+ * de DFR sólo se calcula el primer factor de la fórmula. Para bm25 se calcula todo
+ * el sumando.
+ */
+void Buscador::precalcular_offline()
+{
+    precalcular_dfr();
+    precalcular_bm25();
 }
 
 Buscador::Buscador(const string& directorioIndexacion, const int& f) : IndexadorHash(directorioIndexacion)
