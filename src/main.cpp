@@ -13,7 +13,7 @@ public:
         Buscador b("./resources/guardadoIndicePrueba", 0);
         b.IndexarPregunta("KENNEDY ADMINISTRATION PRESSURE ON NGO DINH DIEMSTOP SUPPRESSING THE BUDDHISTS .");
         b.Buscar();
-        // b.ImprimirResultadoBusqueda();
+        b.ImprimirResultadoBusqueda();
     }
 };
 

@@ -3,6 +3,7 @@
 #include <fstream>
 #include <algorithm>
 #include <cmath>
+#include <regex>
 
 using namespace std;
 
@@ -131,7 +132,13 @@ void Buscador::precalcular_offline()
 void Buscador::guardarNombresDocs()
 {
     for (const auto& it_ind_docs : indiceDocs)
-        nombresDocs.emplace(it_ind_docs.second.idDoc, it_ind_docs.first);
+    {
+        // regex expr(".*\\/(.*)\\..*");
+        // smatch matches;
+        // regex_match(it_ind_docs.first.begin(), it_ind_docs.first.end(), matches, expr);
+        // nombresDocs[it_ind_docs.second.idDoc] = matches[1];
+        nombresDocs[it_ind_docs.second.idDoc] = it_ind_docs.first;
+    }
 }
 
 Buscador::Buscador(const string& directorioIndexacion, const int& f) : IndexadorHash(directorioIndexacion)
@@ -189,22 +196,25 @@ void Buscador::buscar_pregunta(const size_t& num_pregunta)
     {
         const unordered_map<string, InformacionTermino>::const_iterator it_indice_tok 
         = indice.find(entrada_indice_pregunta.first);
-        for (const auto& entrada_l_docs : it_indice_tok->second.l_docs)
+        if (it_indice_tok != indice.end())
         {
-            unordered_map<long int, double>::iterator parciales_it =
-            resultados_parciales.find(entrada_l_docs.first);
-            double sim_parcial;
-            if (formSimilitud == 0)
+            for (const auto& entrada_l_docs : it_indice_tok->second.l_docs)
             {
-                sim_parcial = entrada_indice_pregunta.second.ft / (double) infPregunta.numTotalPalSinParada;
-                sim_parcial *= entrada_l_docs.second.dfr_parcial;
+                unordered_map<long int, double>::iterator parciales_it =
+                resultados_parciales.find(entrada_l_docs.first);
+                double sim_parcial;
+                if (formSimilitud == 0)
+                {
+                    sim_parcial = entrada_indice_pregunta.second.ft / (double) infPregunta.numTotalPalSinParada;
+                    sim_parcial *= entrada_l_docs.second.dfr_parcial;
+                }
+                else
+                    sim_parcial = entrada_l_docs.second.bm25_parcial;
+                if (parciales_it == resultados_parciales.end())
+                    resultados_parciales.emplace(entrada_l_docs.first, sim_parcial);
+                else
+                    parciales_it->second += sim_parcial;
             }
-            else
-                sim_parcial = entrada_l_docs.second.bm25_parcial;
-            if (parciales_it == resultados_parciales.end())
-                resultados_parciales.emplace(entrada_l_docs.first, sim_parcial);
-            else
-                parciales_it->second += sim_parcial;
         }
     }
     for (const auto& fila_similitud : resultados_parciales)
@@ -241,12 +251,16 @@ void Buscador::ImprimirResultadoBusqueda(const int& maxDocsPregunta)
     {
         const bool maximoSuperado = (docs_impresos_pregunta + 1) == maxDocsPregunta;
         ResultadoRI res = docsOrdenados[docs_impresos_total];
+        regex expr(".*\\/(.*)\\..*");
+        smatch matches;
+        regex_match(nombresDocs[res.IdDoc()], matches, expr);
+        string nombreSinRuta = matches[1];
         cout << res.NumPregunta() << " ";
         if (formSimilitud)
             cout << "BM25 ";
         else
             cout << "DFR ";
-        cout << nombresDocs[res.IdDoc()] << " ";
+        cout << nombreSinRuta << " ";
         cout << docs_impresos_pregunta << " ";
         cout << res.VSimilitud() << " ";
         if (conjuntoPreguntas)
