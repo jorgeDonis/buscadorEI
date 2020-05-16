@@ -6,8 +6,6 @@
 
 using namespace std;
 
-string ResultadoRI::NOMBRE_DOC_DEFAULT = "NULL_DOC_NAME";
-
 const float Buscador::DEFAULT_B = 0.75;
 const float Buscador::DEFAULT_C = 2;
 const float Buscador::DEFAULT_K1 = 1.2;
@@ -32,7 +30,6 @@ ostream& operator<<(ostream& os, const Buscador& bus)
 }
 
 ResultadoRI::ResultadoRI(const double & kvSimilitud, const long int & kidDoc, const int & np)
-: nombreDoc(NOMBRE_DOC_DEFAULT)
 {
     vSimilitud = kvSimilitud;
     this->idDoc = kidDoc;
@@ -40,7 +37,6 @@ ResultadoRI::ResultadoRI(const double & kvSimilitud, const long int & kidDoc, co
 }
 
 ResultadoRI::ResultadoRI(const double &kvSimilitud, const long int &kidDoc, const int &np, string& nombreFichero)
-    : nombreDoc(nombreFichero)
 {
     vSimilitud = kvSimilitud;
     this->idDoc = kidDoc;
@@ -51,11 +47,10 @@ void ResultadoRI::copy_vals(const ResultadoRI& res)
 {
     vSimilitud = res.vSimilitud;
     idDoc = res.idDoc;
-    nombreDoc = res.nombreDoc;
     numPregunta = res.numPregunta;
 }
 
-ResultadoRI::ResultadoRI(const ResultadoRI& res) : nombreDoc(NOMBRE_DOC_DEFAULT)
+ResultadoRI::ResultadoRI(const ResultadoRI& res)
 {
     copy_vals(res);
 }
@@ -70,12 +65,19 @@ ResultadoRI& ResultadoRI::operator=(const ResultadoRI& res)
     return *this;
 }
 
+/**
+ * @brief Funciona al revés para que ordene de mayor a menor. No tengo claro si
+ * funciona bien con varios numPregunta
+ * @param lhs 
+ * @return true 
+ * @return false 
+ */
 bool ResultadoRI::operator<(const ResultadoRI &lhs) const
 {
     if (numPregunta == lhs.numPregunta)
-        return (vSimilitud < lhs.vSimilitud);
+        return (vSimilitud > lhs.vSimilitud);
     else
-        return (numPregunta > lhs.numPregunta);
+        return (numPregunta < lhs.numPregunta);
 }
 
 Buscador::Buscador()
@@ -90,20 +92,28 @@ Buscador::Buscador()
  * @brief Actualizará para cada InfTermDoc indexado el miembro dfr_parcial.
  * Éste se corresponde con w_i,d 
  */
-void Buscador::precalcular_dfr()
+inline void Buscador::precalcular_dfr()
 {
-    for (const pair<string, InformacionTermino>& it_indice : indice)
+    double avr_ld = (double) informacionColeccionDocs.numTotalPalSinParada / informacionColeccionDocs.numDocs;
+    for (auto& it_indice : indice)
     {
+        size_t n_t = it_indice.second.l_docs.size();
         double lambda = (double) it_indice.second.ftc / informacionColeccionDocs.numDocs;
-        for (const pair<unsigned long, InfTermDoc>& it_ldocs : it_indice.second.l_docs)
+        for (auto& it_ldocs : it_indice.second.l_docs)
         {
-            double avr_ld = informacionColeccionDocs.numTotalPalSinParada / informacionColeccionDocs.numDocs;
             double ftd = it_ldocs.second.ft;
             size_t ld = indiceDocs[nombresDocs[it_ldocs.first]].numPalSinParada;
-            double ftd_norm = ftd * log2(1 + (c * avr_ld) / (double) ld);
-            
+            double ftd_norm = ftd * log2(1 + c * avr_ld / (double) ld);
+            double first_factor = log2(1 + lambda) + ftd_norm * log2((1 + lambda) / (double) lambda);
+            double second_factor = ((double) (it_indice.second.ftc + 1)) / (n_t * (ftd_norm + 1));
+            it_ldocs.second.dfr_parcial = first_factor * second_factor;           
         }
     }
+}
+
+inline void Buscador::precalcular_bm25()
+{
+
 }
 
 /**
@@ -118,6 +128,12 @@ void Buscador::precalcular_offline()
     precalcular_bm25();
 }
 
+void Buscador::guardarNombresDocs()
+{
+    for (const auto& it_ind_docs : indiceDocs)
+        nombresDocs.emplace(it_ind_docs.second.idDoc, it_ind_docs.first);
+}
+
 Buscador::Buscador(const string& directorioIndexacion, const int& f) : IndexadorHash(directorioIndexacion)
 {
     docsOrdenados = vector<ResultadoRI>(informacionColeccionDocs.numDocs, ResultadoRI(0, -1, 0));
@@ -127,10 +143,13 @@ Buscador::Buscador(const string& directorioIndexacion, const int& f) : Indexador
     b = Buscador::DEFAULT_B;
     c = Buscador::DEFAULT_C;
     k1 = Buscador::DEFAULT_K1;
+    guardarNombresDocs();
+    precalcular_offline();
 }
 
 void Buscador::copy_vals(const Buscador& bus)
 {
+    nombresDocs = bus.nombresDocs;
     numDocsBuscados = bus.numDocsBuscados;
     numDocsImprimir = bus.numDocsImprimir;
     docsOrdenados = bus.docsOrdenados;
@@ -165,33 +184,33 @@ Buscador& Buscador::operator=(const Buscador& bus)
  */
 void Buscador::buscar_pregunta(const size_t& num_pregunta)
 {
-    unordered_map<long int, pair<double, string&>> resultados_parciales;
-    for (const pair<string, InformacionTerminoPregunta>& entrada_indice_pregunta : indicePregunta)
+    unordered_map<long int, double> resultados_parciales;
+    for (const auto& entrada_indice_pregunta : indicePregunta)
     {
         const unordered_map<string, InformacionTermino>::const_iterator it_indice_tok 
         = indice.find(entrada_indice_pregunta.first);
-        for (const pair<long int, InfTermDoc>& entrada_l_docs : it_indice_tok->second.l_docs)
+        for (const auto& entrada_l_docs : it_indice_tok->second.l_docs)
         {
-            unordered_map<long int, pair<double, string&>>::iterator parciales_it =
+            unordered_map<long int, double>::iterator parciales_it =
             resultados_parciales.find(entrada_l_docs.first);
             double sim_parcial;
             if (formSimilitud == 0)
             {
-                sim_parcial = entrada_indice_pregunta.second.ft / (double) indicePregunta.size();
+                sim_parcial = entrada_indice_pregunta.second.ft / (double) infPregunta.numTotalPalSinParada;
                 sim_parcial *= entrada_l_docs.second.dfr_parcial;
             }
             else
                 sim_parcial = entrada_l_docs.second.bm25_parcial;
             if (parciales_it == resultados_parciales.end())
-                resultados_parciales.emplace(make_pair(sim_parcial, nombresDocs[entrada_l_docs.first]));
+                resultados_parciales.emplace(entrada_l_docs.first, sim_parcial);
             else
-                parciales_it->second.first += sim_parcial;
+                parciales_it->second += sim_parcial;
         }
     }
-    for (const pair<long int, pair<double, string&>>& fila_similitud : resultados_parciales)
+    for (const auto& fila_similitud : resultados_parciales)
     {
         docsOrdenados[numDocsBuscados] = 
-        ResultadoRI(fila_similitud.second.first, fila_similitud.first, num_pregunta, fila_similitud.second.second);
+        ResultadoRI(fila_similitud.second, fila_similitud.first, num_pregunta);
         numDocsBuscados++;
     }
     sort(docsOrdenados.begin(), docsOrdenados.begin() + numDocsBuscados);
@@ -213,27 +232,38 @@ bool Buscador::Buscar(const string& dirPreguntas, const int& numDocumentos, cons
     return false; //TODO
 }
 
-void Buscador::ImprimirResultadoBusqueda(const int& numDocumentos)
+void Buscador::ImprimirResultadoBusqueda(const int& maxDocsPregunta)
 {
-    //TODO hacer
-    size_t docs_impresos = 0;
-    while (docsOrdenados.size() != 0 || docs_impresos == numDocumentos)
+    const bool conjuntoPreguntas = docsOrdenados[0].NumPregunta();
+    size_t docs_impresos_pregunta = 0;
+    size_t docs_impresos_total = 0;
+    while (docs_impresos_total != numDocsBuscados)
     {
-        // ResultadoRI res = docsOrdenados.top();
-        // docsOrdenados.pop();
-        // cout << res.NumPregunta() << " ";
-        // if (formSimilitud)
-        //     cout << "BM25 ";
-        // else
-        //     cout << "DFR ";
-        // cout << res.NombreDoc() << " ";
-        // cout << docs_impresos << " ";
-        // cout << res.VSimilitud() << " ";
-        // if (!res.NumPregunta())
-        //     cout << Pregunta() << " ";
-        // else
-        //     cout << "ConjuntoDePreguntas" << endl;
-        docs_impresos++;
+        const bool maximoSuperado = (docs_impresos_pregunta + 1) == maxDocsPregunta;
+        ResultadoRI res = docsOrdenados[docs_impresos_total];
+        cout << res.NumPregunta() << " ";
+        if (formSimilitud)
+            cout << "BM25 ";
+        else
+            cout << "DFR ";
+        cout << nombresDocs[res.IdDoc()] << " ";
+        cout << docs_impresos_pregunta << " ";
+        cout << res.VSimilitud() << " ";
+        if (conjuntoPreguntas)
+            cout << "ConjuntoDePreguntas" << endl;
+        else
+            cout << Pregunta() << endl;
+        docs_impresos_pregunta++;
+        docs_impresos_total++;
+        const size_t numPreguntaPrev = docsOrdenados[docs_impresos_total - 1].NumPregunta();
+        if (maximoSuperado)
+        {
+            while (docs_impresos_total != numDocsBuscados && 
+                   numPreguntaPrev == docsOrdenados[docs_impresos_total].NumPregunta())
+                docs_impresos_total++;
+        }
+        if (numPreguntaPrev != docsOrdenados[docs_impresos_total].NumPregunta())
+            docs_impresos_pregunta = 0;
     }
 }
 

@@ -21,8 +21,7 @@ class InfTermDoc
         std::list<int> posTerm;
         void copy_vals(const InfTermDoc&);
     public:
-        InfTermDoc() {ft = 0;}
-        ~InfTermDoc() {posTerm.clear();}
+        InfTermDoc() {ft = 0; dfr_parcial = -1; bm25_parcial = -1;}
         InfTermDoc(const InfTermDoc &);
         InfTermDoc& operator=(const InfTermDoc&);
 };

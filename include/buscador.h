@@ -8,12 +8,11 @@
 
 class ResultadoRI
 {
-    static std::string NOMBRE_DOC_DEFAULT;
+    friend class Debugger;
     friend std::ostream& operator<<(std::ostream& os, const ResultadoRI& res);
     private:
         double vSimilitud;
         long int idDoc;
-        string& nombreDoc; //Referencia al nombre del fichero
         int numPregunta;
         void copy_vals(const ResultadoRI&);
     public:
@@ -23,20 +22,21 @@ class ResultadoRI
         ResultadoRI& operator=(const ResultadoRI&);
         double VSimilitud() const {return vSimilitud;}
         long int IdDoc() const {return idDoc;}
-        string NombreDoc() const {return nombreDoc;}
         int NumPregunta() const {return numPregunta;}
         bool operator<(const ResultadoRI& lhs) const;
 
 };
 
-class Buscador: private IndexadorHash
+class Buscador: public IndexadorHash
 {
+    friend class Debugger;
     friend std::ostream& operator<<(std::ostream&, const Buscador&);
     private:
         const static float DEFAULT_B, DEFAULT_C, DEFAULT_K1;
         const static int DEFAULT_FORM_SIMILITUD;
         const static int NUM_PREGUNTAS_TOTAL; // nº de ficheros con una pregunta en cada uno
         std::vector<ResultadoRI> docsOrdenados;
+        std::unordered_map<long int, std::string> nombresDocs;
         size_t numDocsBuscados;
         size_t numDocsImprimir;
         int formSimilitud;
@@ -46,6 +46,7 @@ class Buscador: private IndexadorHash
         void precalcular_bm25();
         void precalcular_dfr();
         void precalcular_offline();
+        void guardarNombresDocs();
         void copy_vals(const Buscador&);
         void buscar_pregunta(const size_t&);
         Buscador();

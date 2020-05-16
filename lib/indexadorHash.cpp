@@ -108,7 +108,6 @@ void IndexadorHash::copy_vals(const IndexadorHash& foo)
 {
     indice = foo.indice;
     indiceDocs = foo.indiceDocs;
-    nombresDocs = foo.nombresDocs;
     indiceDisco = foo.indiceDisco;
     indiceDocsDisco = foo.indiceDocsDisco;
     informacionColeccionDocs = foo.informacionColeccionDocs;
@@ -288,7 +287,6 @@ bool IndexadorHash::indexar_documento(const string& nombreDoc)
         cerr << "ERROR: falta de memoria al insertar en indiceDocs" << endl;
         return false;
     }
-    nombresDocs[it.first->second.idDoc] = nombreDoc; //necesario para buscar
     return indexar_documento(it.first->second, nombreDoc);
 }
 
@@ -300,7 +298,7 @@ inline void IndexadorHash::actualizar_indice(const string& token, InfDoc& infdoc
     if (it == indice.end())
     {
         informacionColeccionDocs.numTotalPalDiferentes++;
-        it = indice.emplace(token, InformacionTermino()).first;
+        it = indice.emplace(piecewise_construct, forward_as_tuple(token), forward_as_tuple()).first;
     }
     it->second.ftc++;
 
@@ -309,7 +307,8 @@ inline void IndexadorHash::actualizar_indice(const string& token, InfDoc& infdoc
     if (it_doc == it->second.l_docs.end())
     {
         infdoc.numPalDiferentes++;
-        it_doc = it->second.l_docs.emplace(infdoc.idDoc, InfTermDoc()).first;
+        it_doc = it->second.l_docs.emplace(piecewise_construct,
+         forward_as_tuple(infdoc.idDoc), forward_as_tuple()).first;
     }
     it_doc->second.ft++;
     if (almacenarPosTerm)
@@ -425,7 +424,7 @@ void IndexadorHash::actualizar_indice_pregunta(const string& token, size_t pos)
     if (it == indicePregunta.end())
     {
         infPregunta.numTotalPalDiferentes++;
-        indicePregunta.emplace(token, InformacionTerminoPregunta());
+        indicePregunta.emplace(piecewise_construct, forward_as_tuple(token), forward_as_tuple());
     }
     indicePregunta[token].ft++;
     if (almacenarPosTerm)
