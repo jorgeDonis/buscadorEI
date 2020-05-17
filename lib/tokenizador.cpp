@@ -170,7 +170,7 @@ Tokenizador& Tokenizador::operator=(const Tokenizador& tokenizador)
     return *this;
 }
 
-bool Tokenizador::is_delimiter(const char& foo) const
+inline bool Tokenizador::is_delimiter(const char& foo) const
 {
     return delimiters_set[(unsigned char) foo];
 }
@@ -540,12 +540,12 @@ void EstadoChar::siguiente()
     }
 }
 
-void Tokenizador::Tokenizar_fichero_simple(const char* mapa_entrada, char* mapa_salida, const size_t len)
+inline void Tokenizador::Tokenizar_fichero_simple(const char* mapa_entrada, char* mapa_salida, const size_t len)
 {
     size_t it_entrada, it_salida;
     it_entrada = it_salida = 0;
     char c = mapa_entrada[0];
-    while (it_entrada < len)
+    while (it_entrada < len - 1) //OJO ESTE - 1 NO ESTOY SEGURO TODO
     {
         while (is_delimiter(c))
         {

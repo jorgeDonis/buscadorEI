@@ -11,7 +11,7 @@ const float Buscador::DEFAULT_B = 0.75;
 const float Buscador::DEFAULT_C = 2;
 const float Buscador::DEFAULT_K1 = 1.2;
 const int Buscador::DEFAULT_FORM_SIMILITUD = 0;
-const int Buscador::NUM_PREGUNTAS_TOTAL = 83;
+const size_t Buscador::TOTAL_PREGUNTAS = 86;
 
 ostream& operator<<(ostream& os, const ResultadoRI& res){
     os << res.vSimilitud << "\t\t" << res.idDoc << "\t" << res.numPregunta << endl;
@@ -143,9 +143,8 @@ void Buscador::guardarNombresDocs()
 
 Buscador::Buscador(const string& directorioIndexacion, const int& f) : IndexadorHash(directorioIndexacion)
 {
-    docsOrdenados = vector<ResultadoRI>(informacionColeccionDocs.numDocs, ResultadoRI(0, -1, 0));
+    docsOrdenados = vector<ResultadoRI>(informacionColeccionDocs.numDocs * TOTAL_PREGUNTAS, ResultadoRI(0, -1, 0));
     numDocsBuscados = 0;
-    numDocsImprimir = 0;
     formSimilitud = f;
     b = Buscador::DEFAULT_B;
     c = Buscador::DEFAULT_C;
@@ -158,7 +157,6 @@ void Buscador::copy_vals(const Buscador& bus)
 {
     nombresDocs = bus.nombresDocs;
     numDocsBuscados = bus.numDocsBuscados;
-    numDocsImprimir = bus.numDocsImprimir;
     docsOrdenados = bus.docsOrdenados;
     formSimilitud = bus.formSimilitud;
     b = bus.b;
@@ -181,15 +179,14 @@ Buscador& Buscador::operator=(const Buscador& bus)
     return *this;
 }
 
+
 /**
- * @brief Actualizará docsOrdenados y numDocsOrdenados con 
- * varios ResultadoRI's . Además ordenará el vector asociado
- * a esa pregunta. La pregunta tiene que estar indexada en
- * indicePregunta
- * 
- * @param num_pregunta 
+ * @brief Calcula los valores de similitud de los documentos con tokens
+ * presentes en la query con la misma. Añade ResultadoRI's al vector docsOrdenados. No ordena
+ * el vector.
+ * @param num_pregunta 0 si sólo es una
  */
-void Buscador::buscar_pregunta(const size_t& num_pregunta)
+inline void Buscador::calc_simil_docs(const size_t& num_pregunta)
 {
     unordered_map<long int, double> resultados_parciales;
     for (const auto& entrada_indice_pregunta : indicePregunta)
@@ -223,7 +220,6 @@ void Buscador::buscar_pregunta(const size_t& num_pregunta)
         ResultadoRI(fila_similitud.second, fila_similitud.first, num_pregunta);
         numDocsBuscados++;
     }
-    sort(docsOrdenados.begin(), docsOrdenados.begin() + numDocsBuscados);
 }
 
 bool Buscador::Buscar(const int& numDocumentos)
@@ -231,15 +227,60 @@ bool Buscador::Buscar(const int& numDocumentos)
     if (indicePregunta.size())
     {
         numDocsBuscados = 0;
-        buscar_pregunta(0);
+        calc_simil_docs(0);
+        sort(docsOrdenados.begin(), docsOrdenados.begin() + numDocsBuscados);
+        numDocsBuscados = min(numDocsBuscados, (size_t) numDocumentos);
         return true;
     }
+    cerr << "ERROR: no hay ninguna pregunta indexada" << endl;
     return false;
+}
+
+/**
+ * @brief Indexa la pregunta contenida en el fichero dirPreguntas/num_pregunta.txt
+ * 
+ * @param num_pregunta 
+ * @param dirPreguntas 
+ */
+void Buscador::indexar_pregunta(const size_t& num_pregunta, const string& dirPreguntas)
+{
+    string nombre_fichero_pregunta = dirPreguntas + "/" + to_string(num_pregunta) + ".txt";
+    ifstream fichero_pregunta(nombre_fichero_pregunta, ios::in | ios::binary | ios::ate);
+    size_t file_size = fichero_pregunta.tellg();
+    char *memblock = (char *)malloc(file_size);
+    fichero_pregunta.seekg(0, ios::beg);
+    fichero_pregunta.read(memblock, file_size - 1); // para no leer el /n
+    fichero_pregunta.close();
+    string pregunta(memblock);
+    free(memblock);
+    IndexarPregunta(pregunta);
 }
 
 bool Buscador::Buscar(const string& dirPreguntas, const int& numDocumentos, const int& numPregInicio, const int& numPregFin)
 {
-    return false; //TODO
+    docsOrdenados = vector<ResultadoRI>(informacionColeccionDocs.numDocs * TOTAL_PREGUNTAS, ResultadoRI(0, -1, 0));
+    if (Tokenizador::file_exists(dirPreguntas))
+    {
+        numDocsBuscados = 0;
+        size_t numDocsOrdenados = 0;
+        for (size_t num_pregunta = numPregInicio; num_pregunta <= numPregFin; num_pregunta++)
+        {
+            indexar_pregunta(num_pregunta, dirPreguntas);
+            size_t tam_vector_prev = numDocsBuscados;
+            calc_simil_docs(num_pregunta);
+            size_t nuevos_docs_buscados = numDocsBuscados - tam_vector_prev;
+            if (nuevos_docs_buscados > numDocumentos)
+            {
+                sort(docsOrdenados.begin() + numDocsOrdenados, docsOrdenados.begin() + numDocsBuscados);
+                numDocsBuscados = numDocsOrdenados = tam_vector_prev + numDocumentos;
+            }
+        }
+        sort(docsOrdenados.begin() + numDocsOrdenados, docsOrdenados.begin() + numDocsBuscados);
+        return true;
+    }
+    cerr << "ERROR: No existe el directorio " << dirPreguntas << endl;
+    return false;
+    
 }
 
 void Buscador::ImprimirResultadoBusqueda(const int& maxDocsPregunta)
@@ -247,11 +288,11 @@ void Buscador::ImprimirResultadoBusqueda(const int& maxDocsPregunta)
     const bool conjuntoPreguntas = docsOrdenados[0].NumPregunta();
     size_t docs_impresos_pregunta = 0;
     size_t docs_impresos_total = 0;
+    regex expr(".*\\/(.*)\\..*");
     while (docs_impresos_total != numDocsBuscados)
     {
         const bool maximoSuperado = (docs_impresos_pregunta + 1) == maxDocsPregunta;
         ResultadoRI res = docsOrdenados[docs_impresos_total];
-        regex expr(".*\\/(.*)\\..*");
         smatch matches;
         regex_match(nombresDocs[res.IdDoc()], matches, expr);
         string nombreSinRuta = matches[1];

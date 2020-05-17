@@ -136,7 +136,6 @@ IndexadorHash::IndexadorHash(const std::string &fichStopWords, const std::string
                              : indice(), indicePregunta(), stopWords(), informacionColeccionDocs(), tok(delimitadores, detectComp, minuscSinAcentos)
                              , stemmer(), indiceDocs(), infPregunta(), indiceDisco(), indiceDocsDisco()
 {
-    tok.DelimitadoresPalabra(tok.delimiters);
     tipoStemmer = tStemmer;
     if (leer_fichero_stopwords(fichStopWords, minuscSinAcentos))
     {
@@ -215,7 +214,6 @@ bool IndexadorHash::GuardarIndexacion() const
 
 IndexadorHash::IndexadorHash(const string& directorioIndexacion)
 {
-    tok.DelimitadoresPalabra(tok.delimiters);
     if (!Tokenizador::file_exists(directorioIndexacion))
         cerr << "ERROR: el directorio " << directorioIndexacion << " no existe" << endl;
     else if (!Tokenizador::is_dir(directorioIndexacion))
@@ -976,6 +974,7 @@ void GestorFicheros::guardar(const Tokenizador& tok, std::fstream& fichero_salid
     fichero_salida.write((const char*) &tam_delimitadores, sizeof(unsigned long int));
     fichero_salida.write((const char*) tok.delimiters.c_str(), sizeof(char) * tam_delimitadores);
     fichero_salida.write((const char*) tok.delimiters_set, sizeof(short) * 256);
+    fichero_salida.write((const char *)tok.delimiters_set_plus_null, sizeof(short) * 256);
     fichero_salida.write((const char*) &tok.casosEspeciales, sizeof(bool));
     fichero_salida.write((const char*) &tok.pasarAminuscSinAcentos, sizeof(bool));
 }
@@ -989,6 +988,7 @@ void GestorFicheros::leer(Tokenizador& tok, std::fstream& fichero_entrada)
     tok.delimiters = string(delimitadores);
     free(delimitadores);
     fichero_entrada.read((char * ) tok.delimiters_set, sizeof(short) * 256);
+    fichero_entrada.read((char *)tok.delimiters_set_plus_null, sizeof(short) * 256);
     fichero_entrada.read((char*) &tok.casosEspeciales, sizeof(bool));
     fichero_entrada.read((char*) &tok.pasarAminuscSinAcentos, sizeof(bool));
 }
