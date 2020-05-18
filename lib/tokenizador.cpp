@@ -69,7 +69,7 @@ size_t EstadoChar::iterador_salida;
 
 void Tokenizador::minusc_sin_acentos(string& foo)
 {
-    for (int i = 0; i < foo.length(); i++)
+    for (size_t i = 0; i < foo.length(); i++)
         foo[i] = Tokenizador::MAPA_ACENTOS[(unsigned char) foo[i]];
 }
 

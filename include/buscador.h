@@ -37,7 +37,9 @@ class Buscador: public IndexadorHash
         const static int DEFAULT_FORM_SIMILITUD;
         std::vector<ResultadoRI> docsOrdenados; //TODO transformar en lista de listas si va lento
         std::unordered_map<long int, std::string> nombresDocs; //TODO hacer otra tabla hash con el nombre sin extension si va lento
+        std::unordered_map<long int, std::string> nombresDocsSinRuta;
         size_t numDocsBuscados;
+        std::string busqueda_str;
         int formSimilitud;
         double c;
         double k1;
@@ -48,6 +50,7 @@ class Buscador: public IndexadorHash
         void guardarNombresDocs();
         void copy_vals(const Buscador&);
         void calc_simil_docs(const size_t&);
+        void imprimir_busqueda_str(const int& numDocumentos = 99999);
         void indexar_pregunta(const size_t&, const std::string&);
         Buscador();
     public:
@@ -60,7 +63,7 @@ class Buscador: public IndexadorHash
         bool ImprimirResultadoBusqueda(const std::string&, const int &numDocumentos = 99999);
         int DevolverFormulaSimilitud() const {return formSimilitud;}
         bool CambiarFormulaSimilitud(const int& f) {
-            if (!f || (f == 1)) formSimilitud = f;
+            if (!f || (f == 1)) {formSimilitud = f; return true;} else return false;
         }
         void CambiarParametrosDFR(const double& kc) { c = kc; }
         double DevolverParametrosDFR() const { return c; }

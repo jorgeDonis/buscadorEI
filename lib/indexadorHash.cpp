@@ -29,8 +29,6 @@ inline uint32_t IndexadorHash::fnv1a(const char *text, uint32_t hash = Seed)
 
 size_t IndexadorHash::get_file_size(const string& filename)
 {
-    off_t file_size;
-    char *buffer;
     struct stat stbuf;
     int fd;
 
@@ -63,9 +61,7 @@ ostream& operator<<(ostream& os, const IndexadorHash& index)
     return os;
 }
 
-IndexadorHash::IndexadorHash() : indice(), indiceDocs(), indicePregunta(), stopWords(), 
-                                 informacionColeccionDocs(), tok(), stemmer(), infPregunta(),
-                                 indiceDisco(), indiceDocsDisco()
+IndexadorHash::IndexadorHash()
 {
     tok.DelimitadoresPalabra(tok.delimiters);
     pregunta = "";
@@ -133,8 +129,7 @@ void IndexadorHash::crear_directorios_indice()
 IndexadorHash::IndexadorHash(const std::string &fichStopWords, const std::string &delimitadores,
                              const bool &detectComp, const bool &minuscSinAcentos, const std::string &dirIndice,
                              const int &tStemmer, const bool &almEnDisco, const bool &almPosTerm)
-                             : indice(), indicePregunta(), stopWords(), informacionColeccionDocs(), tok(delimitadores, detectComp, minuscSinAcentos)
-                             , stemmer(), indiceDocs(), infPregunta(), indiceDisco(), indiceDocsDisco()
+                             : tok(delimitadores, detectComp, minuscSinAcentos)
 {
     tipoStemmer = tStemmer;
     if (leer_fichero_stopwords(fichStopWords, minuscSinAcentos))
@@ -544,7 +539,7 @@ bool IndexadorHash::Devuelve(const string& word, InformacionTermino& inf)
         it = indice.find(word_minusc);
         if (it == indice.end())
             return false;
-            inf = it->second;
+        inf = it->second;
         return true;
     }
     if (indiceDisco.find(word_minusc) == indiceDisco.end())

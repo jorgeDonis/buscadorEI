@@ -67,7 +67,7 @@ ResultadoRI& ResultadoRI::operator=(const ResultadoRI& res)
 }
 
 /**
- * @brief Funciona al rev√©s para que ordene de mayor a menor. No tengo claro si
+ * @brief Funciona al revÈs para que ordene de mayor a menor. No tengo claro si
  * funciona bien con varios numPregunta
  * @param lhs 
  * @return true 
@@ -90,8 +90,8 @@ Buscador::Buscador()
 }
 
 /**
- * @brief Actualizar√° para cada InfTermDoc indexado el miembro dfr_parcial.
- * √âste se corresponde con w_i,d 
+ * @brief Actualizar· para cada InfTermDoc indexado el miembro dfr_parcial.
+ * …ste se corresponde con w_i,d 
  */
 inline void Buscador::precalcular_dfr()
 {
@@ -114,13 +114,26 @@ inline void Buscador::precalcular_dfr()
 
 inline void Buscador::precalcular_bm25()
 {
-
+    double avgdl = (double)informacionColeccionDocs.numTotalPalSinParada / informacionColeccionDocs.numDocs;
+    double N = informacionColeccionDocs.numDocs;
+    for (auto& it_indice : indice)
+    {
+        double nqi = it_indice.second.l_docs.size();
+        for (auto& it_ldocs : it_indice.second.l_docs)
+        {
+            double fqid = it_ldocs.second.ft;
+            double D = indiceDocs[nombresDocs[it_ldocs.first]].numPalSinParada;
+            double IDF = log2((N - nqi + 0.5) / (nqi + 0.5));
+            double second_factor = (fqid * (k1 + 1)) / (fqid + k1 * (1 - b + b * (D / avgdl)));
+            it_ldocs.second.bm25_parcial = IDF * second_factor;
+        }
+    }
 }
 
 /**
  * @brief Actualiza los valores de similitud para todos los InfTermDoc
  * indexados, es decir, las variables dfr_parcial y bm25_parcial. En el caso
- * de DFR s√≥lo se calcula el primer factor de la f√≥rmula. Para bm25 se calcula todo
+ * de DFR sÛlo se calcula el primer factor de la fÛrmula. Para bm25 se calcula todo
  * el sumando.
  */
 void Buscador::precalcular_offline()
@@ -133,17 +146,16 @@ void Buscador::guardarNombresDocs()
 {
     for (const auto& it_ind_docs : indiceDocs)
     {
-        // regex expr(".*\\/(.*)\\..*");
-        // smatch matches;
-        // regex_match(it_ind_docs.first.begin(), it_ind_docs.first.end(), matches, expr);
-        // nombresDocs[it_ind_docs.second.idDoc] = matches[1];
+        regex expr(".*\\/(.*)\\..*");
+        smatch matches;
+        regex_match(it_ind_docs.first.begin(), it_ind_docs.first.end(), matches, expr);
+        nombresDocsSinRuta[it_ind_docs.second.idDoc] = matches[1];
         nombresDocs[it_ind_docs.second.idDoc] = it_ind_docs.first;
     }
 }
 
 Buscador::Buscador(const string& directorioIndexacion, const int& f) : IndexadorHash(directorioIndexacion)
 {
-    docsOrdenados = vector<ResultadoRI>(informacionColeccionDocs.numDocs * TOTAL_PREGUNTAS, ResultadoRI(0, -1, 0));
     numDocsBuscados = 0;
     formSimilitud = f;
     b = Buscador::DEFAULT_B;
@@ -155,6 +167,7 @@ Buscador::Buscador(const string& directorioIndexacion, const int& f) : Indexador
 
 void Buscador::copy_vals(const Buscador& bus)
 {
+    nombresDocsSinRuta = bus.nombresDocsSinRuta;
     nombresDocs = bus.nombresDocs;
     numDocsBuscados = bus.numDocsBuscados;
     docsOrdenados = bus.docsOrdenados;
@@ -182,9 +195,9 @@ Buscador& Buscador::operator=(const Buscador& bus)
 
 /**
  * @brief Calcula los valores de similitud de los documentos con tokens
- * presentes en la query con la misma. A√±ade ResultadoRI's al vector docsOrdenados. No ordena
+ * presentes en la query con la misma. AÒade ResultadoRI's al vector docsOrdenados. No ordena
  * el vector.
- * @param num_pregunta 0 si s√≥lo es una
+ * @param num_pregunta 0 si sÛlo es una
  */
 inline void Buscador::calc_simil_docs(const size_t& num_pregunta)
 {
@@ -226,6 +239,8 @@ bool Buscador::Buscar(const int& numDocumentos)
 {
     if (indicePregunta.size())
     {
+        if (docsOrdenados.empty())
+            docsOrdenados = vector<ResultadoRI>(informacionColeccionDocs.numDocs , ResultadoRI(0, -1, 0));
         numDocsBuscados = 0;
         calc_simil_docs(0);
         sort(docsOrdenados.begin(), docsOrdenados.begin() + numDocsBuscados);
@@ -258,7 +273,7 @@ void Buscador::indexar_pregunta(const size_t& num_pregunta, const string& dirPre
 
 bool Buscador::Buscar(const string& dirPreguntas, const int& numDocumentos, const int& numPregInicio, const int& numPregFin)
 {
-    docsOrdenados = vector<ResultadoRI>(informacionColeccionDocs.numDocs * TOTAL_PREGUNTAS, ResultadoRI(0, -1, 0));
+    docsOrdenados = vector<ResultadoRI>(informacionColeccionDocs.numDocs * numPregFin - numPregInicio + 1, ResultadoRI(0, -1, 0));
     if (Tokenizador::file_exists(dirPreguntas))
     {
         numDocsBuscados = 0;
@@ -283,43 +298,54 @@ bool Buscador::Buscar(const string& dirPreguntas, const int& numDocumentos, cons
     
 }
 
-void Buscador::ImprimirResultadoBusqueda(const int& maxDocsPregunta)
+void Buscador::imprimir_busqueda_str(const int& maxDocsPregunta)
 {
+    busqueda_str.reserve(numDocsBuscados * 40);
     const bool conjuntoPreguntas = docsOrdenados[0].NumPregunta();
     size_t docs_impresos_pregunta = 0;
     size_t docs_impresos_total = 0;
-    regex expr(".*\\/(.*)\\..*");
     while (docs_impresos_total != numDocsBuscados)
     {
         const bool maximoSuperado = (docs_impresos_pregunta + 1) == maxDocsPregunta;
         ResultadoRI res = docsOrdenados[docs_impresos_total];
-        smatch matches;
-        regex_match(nombresDocs[res.IdDoc()], matches, expr);
-        string nombreSinRuta = matches[1];
-        cout << res.NumPregunta() << " ";
+        string nombreSinRuta = nombresDocsSinRuta[res.IdDoc()];
+        busqueda_str += to_string(res.NumPregunta());
+        busqueda_str += " ";
         if (formSimilitud)
-            cout << "BM25 ";
+            busqueda_str += "BM25 ";
         else
-            cout << "DFR ";
-        cout << nombreSinRuta << " ";
-        cout << docs_impresos_pregunta << " ";
-        cout << res.VSimilitud() << " ";
+            busqueda_str += "DFR ";
+        busqueda_str += nombreSinRuta;
+        busqueda_str += " ";
+        busqueda_str += to_string(docs_impresos_pregunta);
+        busqueda_str += " ";
+        busqueda_str += to_string(res.VSimilitud());
+        busqueda_str += " ";
         if (conjuntoPreguntas)
-            cout << "ConjuntoDePreguntas" << endl;
+            busqueda_str += "ConjuntoDePreguntas\n";
         else
-            cout << Pregunta() << endl;
+        {
+            busqueda_str += Pregunta();
+            busqueda_str += "\n";
+        }
         docs_impresos_pregunta++;
         docs_impresos_total++;
         const size_t numPreguntaPrev = docsOrdenados[docs_impresos_total - 1].NumPregunta();
         if (maximoSuperado)
         {
-            while (docs_impresos_total != numDocsBuscados && 
+            while (docs_impresos_total != numDocsBuscados &&
                    numPreguntaPrev == docsOrdenados[docs_impresos_total].NumPregunta())
                 docs_impresos_total++;
         }
         if (numPreguntaPrev != docsOrdenados[docs_impresos_total].NumPregunta())
             docs_impresos_pregunta = 0;
     }
+}
+
+void Buscador::ImprimirResultadoBusqueda(const int& maxDocsPregunta)
+{
+    imprimir_busqueda_str(maxDocsPregunta);
+    cout << busqueda_str;
 }
 
 bool Buscador::ImprimirResultadoBusqueda(const string& nombreFichero, const int &numDocumentos)

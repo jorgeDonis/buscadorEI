@@ -23,11 +23,11 @@ public:
         i->IndexarDirectorio("./resources/materiales_buscador/CorpusTime/Documentos");
         i->GuardarIndexacion();
         delete i;
-        Buscador b("./resources/guardadoIndicePrueba", 0);
+        Buscador b("./resources/guardadoIndicePrueba", 1);
         double t_0 = getcputime();
-        // b.IndexarPregunta("KENNEDY ADMINISTRATION PRESSURE ON NGO DINH DIEMSTOP SUPPRESSING THE BUDDHISTS . ");
+        // b.IndexarPregunta("pal1 pal4 pal2 pal3 pal1 pal2 pal4 pal2");
         // b.Buscar();
-        b.Buscar("./resources/materiales_buscador/CorpusTime/Preguntas", 9999, 1, 83);
+        b.Buscar("./resources/materiales_buscador/CorpusTime/Preguntas", 99999, 1, 83);
         b.ImprimirResultadoBusqueda();
         double t_f = getcputime();
         cout << "Ha tardado " << t_f - t_0 << " segundos" << endl;

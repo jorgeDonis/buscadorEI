@@ -12,6 +12,9 @@
 			"**/CVS": true,
 			"**/.DS_Store": true,
 			"**/*.o" : true
+		},
+		"files.associations": {
+			"ostream": "cpp"
 		}
 	}
 }
