@@ -67,7 +67,7 @@ ResultadoRI& ResultadoRI::operator=(const ResultadoRI& res)
 }
 
 /**
- * @brief Funciona al revés para que ordene de mayor a menor. No tengo claro si
+ * @brief Funciona al revï¿½s para que ordene de mayor a menor. No tengo claro si
  * funciona bien con varios numPregunta
  * @param lhs 
  * @return true 
@@ -90,8 +90,8 @@ Buscador::Buscador()
 }
 
 /**
- * @brief Actualizará para cada InfTermDoc indexado el miembro dfr_parcial.
- * Éste se corresponde con w_i,d 
+ * @brief Actualizarï¿½ para cada InfTermDoc indexado el miembro dfr_parcial.
+ * ï¿½ste se corresponde con w_i,d 
  */
 inline void Buscador::precalcular_dfr()
 {
@@ -133,7 +133,7 @@ inline void Buscador::precalcular_bm25()
 /**
  * @brief Actualiza los valores de similitud para todos los InfTermDoc
  * indexados, es decir, las variables dfr_parcial y bm25_parcial. En el caso
- * de DFR sólo se calcula el primer factor de la fórmula. Para bm25 se calcula todo
+ * de DFR sï¿½lo se calcula el primer factor de la fï¿½rmula. Para bm25 se calcula todo
  * el sumando.
  */
 void Buscador::precalcular_offline()
@@ -195,9 +195,9 @@ Buscador& Buscador::operator=(const Buscador& bus)
 
 /**
  * @brief Calcula los valores de similitud de los documentos con tokens
- * presentes en la query con la misma. Añade ResultadoRI's al vector docsOrdenados. No ordena
+ * presentes en la query con la misma. Aï¿½ade ResultadoRI's al vector docsOrdenados. No ordena
  * el vector.
- * @param num_pregunta 0 si sólo es una
+ * @param num_pregunta 0 si sï¿½lo es una
  */
 inline void Buscador::calc_simil_docs(const size_t& num_pregunta)
 {
@@ -346,6 +346,7 @@ void Buscador::ImprimirResultadoBusqueda(const int& maxDocsPregunta)
 {
     imprimir_busqueda_str(maxDocsPregunta);
     cout << busqueda_str;
+    busqueda_str.clear();
 }
 
 bool Buscador::ImprimirResultadoBusqueda(const string& nombreFichero, const int &numDocumentos)
