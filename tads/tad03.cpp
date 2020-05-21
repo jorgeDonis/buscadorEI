@@ -18,12 +18,12 @@ double kk1; double kb;
 
 a.IndexarPregunta("pal1 pal4 pal2 pal3 pal1. pal2, pal4 pal2");
 
-if(a.Buscar(1000))
-	a.ImprimirResultadoBusqueda(10000);
+if(a.Buscar(1))
+	a.ImprimirResultadoBusqueda(1);
 
 a.CambiarFormulaSimilitud(1);
 
-if(a.Buscar(100))
-	a.ImprimirResultadoBusqueda(1000);
+if(a.Buscar(1))
+	a.ImprimirResultadoBusqueda(1);
 
 }
