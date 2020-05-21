@@ -1,7 +1,2 @@
-pal1 NO SE HA INDEXADO
-pal7 NO SE HA INDEXADO
-pal1 NO SE HA INDEXADO EN corpus_corto/fichero1.txt
-pal1 NO SE HA INDEXADO EN fichero1.txt
-pal7 NO SE HA INDEXADO EN corpus_corto/fichero1.txt
-pal1 NO SE HA INDEXADO
-pal7 NO SE HA INDEXADO
+0 DFR fichero1 0 2.474810 pal1 pal2
+0 BM25 fichero1 0 -2.193723 pal1 pal2
