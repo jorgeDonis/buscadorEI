@@ -344,32 +344,25 @@ void Buscador::imprimir_busqueda_str(const int& maxDocsPregunta)
 
 void Buscador::ImprimirResultadoBusqueda(const int& maxDocsPregunta)
 {
+    busqueda_str.clear();
     imprimir_busqueda_str(maxDocsPregunta);
     cout << busqueda_str;
-    busqueda_str.clear();
 }
 
-bool Buscador::ImprimirResultadoBusqueda(const string& nombreFichero, const int &numDocumentos)
+bool Buscador::ImprimirResultadoBusqueda(const string& nombreFichero, const int &maxDocsPregunta)
 {
-    //TODO optimizar con mmap y hacer
-    size_t docs_impresos = 0;
-    while (docsOrdenados.size() != 0 || docs_impresos == numDocumentos)
+    busqueda_str.clear();
+    imprimir_busqueda_str(maxDocsPregunta);
+    fstream fichero_salida(nombreFichero, ios::out | ios::binary);
+    if (fichero_salida.is_open())
     {
-        // ResultadoRI res = docsOrdenados.top();
-        // docsOrdenados.pop();
-        // ficheroSalida << res.NumPregunta() << " ";
-        // if (formSimilitud)
-        //     ficheroSalida << "BM25 ";
-        // else
-        //     ficheroSalida << "DFR ";
-        // ficheroSalida << res.NombreDoc() << " ";
-        // ficheroSalida << docs_impresos << " ";
-        // ficheroSalida << res.VSimilitud() << " ";
-        // if (!res.NumPregunta())
-        //     ficheroSalida << Pregunta() << " ";
-        // else
-        //     ficheroSalida << "ConjuntoDePreguntas" << endl;
-        // docs_impresos++;
+        fichero_salida.write(busqueda_str.c_str(), busqueda_str.length());
+        fichero_salida.close();
+    }
+    else
+    {
+        cerr << "ERROR: no se pudo crear el fichero " << nombreFichero << endl;
+        return false;
     }
     return true;
 }

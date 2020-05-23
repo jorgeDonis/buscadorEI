@@ -36,10 +36,10 @@ class Buscador: public IndexadorHash
         const static float DEFAULT_B, DEFAULT_C, DEFAULT_K1;
         const static int DEFAULT_FORM_SIMILITUD;
         std::vector<ResultadoRI> docsOrdenados; //TODO transformar en lista de listas si va lento
-        std::unordered_map<long int, std::string> nombresDocs; //TODO hacer otra tabla hash con el nombre sin extension si va lento
+        std::unordered_map<long int, std::string> nombresDocs;
         std::unordered_map<long int, std::string> nombresDocsSinRuta;
         size_t numDocsBuscados;
-        std::string busqueda_str;
+        std::string busqueda_str; //TODO optimizar con char*
         int formSimilitud;
         double c;
         double k1;

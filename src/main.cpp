@@ -20,16 +20,16 @@ public:
 	static void debug()
 	{
 		IndexadorHash *i = new IndexadorHash("./resources/StopWordsEspanyol.txt", ".     ,:",
-											 false, false, "./resources/guardadoIndicePrueba", 0, false, false);
+											 true, true, "./resources/guardadoIndicePrueba", 2, false, false);
 		i->IndexarDirectorio("./resources/materiales_buscador/CorpusTime/Documentos");
 		i->GuardarIndexacion();
 		delete i;
-		Buscador b("./resources/guardadoIndicePrueba", 1);
+		Buscador b("./resources/guardadoIndicePrueba", 0);
 		double t_0 = getcputime();
-		// b.IndexarPregunta("pal1 pal4 pal2 pal3 pal1 pal2 pal4 pal2");
+		// b.IndexarPregunta("SPAIN EUROPE");
 		// b.Buscar();
-		b.Buscar("./resources/materiales_buscador/CorpusTime/Preguntas", 99999, 1, 83);
-		b.ImprimirResultadoBusqueda();
+		b.Buscar("./resources/materiales_buscador/CorpusTime/Preguntas", 5, 1, 83);
+		b.ImprimirResultadoBusqueda("busqueda.sal");
 		double t_f = getcputime();
 		cout << "Ha tardado " << t_f - t_0 << " segundos" << endl;
 	}
