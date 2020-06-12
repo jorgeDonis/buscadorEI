@@ -349,7 +349,7 @@ void Buscador::ImprimirResultadoBusqueda(const int& maxDocsPregunta)
     cout << busqueda_str;
 }
 
-bool Buscador::ImprimirResultadoBusqueda(const string& nombreFichero, const int &maxDocsPregunta)
+bool Buscador::ImprimirResultadoBusqueda(const int &maxDocsPregunta, const string &nombreFichero)
 {
     busqueda_str.clear();
     imprimir_busqueda_str(maxDocsPregunta);

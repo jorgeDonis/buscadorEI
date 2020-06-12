@@ -60,10 +60,10 @@ class Buscador: public IndexadorHash
         bool Buscar(const int& numDocumentos = 99999);
         bool Buscar(const string&, const int&, const int&, const int&);
         void ImprimirResultadoBusqueda(const int& numDocumentos = 99999);
-        bool ImprimirResultadoBusqueda(const std::string&, const int &numDocumentos = 99999);
-        int DevolverFormulaSimilitud() const {return formSimilitud;}
+        bool ImprimirResultadoBusqueda(const int &numDocumentos, const std::string &);
+        int DevolverFormulaSimilitud() const { return formSimilitud; }
         bool CambiarFormulaSimilitud(const int& f) {
-            if (!f || (f == 1)) {formSimilitud = f; return true;} else return false;
+            if (!f || (f == 1)) { formSimilitud = f; return true; } else return false;
         }
         void CambiarParametrosDFR(const double& kc) { c = kc; }
         double DevolverParametrosDFR() const { return c; }
