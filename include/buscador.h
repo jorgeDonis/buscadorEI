@@ -16,6 +16,7 @@ class ResultadoRI
         int numPregunta;
         void copy_vals(const ResultadoRI&);
     public:
+        ResultadoRI();
         ResultadoRI(const double&, const long int&, const int&);
         ResultadoRI(const double &, const long int &, const int &, string&);
         ResultadoRI(const ResultadoRI&);
@@ -23,6 +24,9 @@ class ResultadoRI
         double VSimilitud() const {return vSimilitud;}
         long int IdDoc() const {return idDoc;}
         int NumPregunta() const {return numPregunta;}
+        void setVSimilitud(const double& sim) { vSimilitud = sim; }
+        void setIdDoc(const int& id) { idDoc = id; }
+        void setNumPregunta(const int& preg) { numPregunta = preg; }
         bool operator<(const ResultadoRI& lhs) const;
 
 };
@@ -32,13 +36,13 @@ class Buscador: public IndexadorHash
     friend class Debugger;
     friend std::ostream& operator<<(std::ostream&, const Buscador&);
     private:
-        const static size_t TOTAL_PREGUNTAS;
+        const static unsigned TOTAL_DOCUMENTOS;
+        const static unsigned TOTAL_PREGUNTAS;
         const static float DEFAULT_B, DEFAULT_C, DEFAULT_K1;
         const static int DEFAULT_FORM_SIMILITUD;
-        std::vector<ResultadoRI> docsOrdenados; //TODO transformar en lista de listas si va lento
+        ResultadoRI docsOrdenados[83][423];
         std::unordered_map<long int, std::string> nombresDocs;
         std::unordered_map<long int, std::string> nombresDocsSinRuta;
-        size_t numDocsBuscados;
         std::string busqueda_str; //TODO optimizar con char*
         int formSimilitud;
         double c;

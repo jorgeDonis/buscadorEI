@@ -11,9 +11,10 @@ const float Buscador::DEFAULT_B = 0.75;
 const float Buscador::DEFAULT_C = 2;
 const float Buscador::DEFAULT_K1 = 1.2;
 const int Buscador::DEFAULT_FORM_SIMILITUD = 0;
-const size_t Buscador::TOTAL_PREGUNTAS = 86;
+const unsigned Buscador::TOTAL_PREGUNTAS = 83;
+const unsigned Buscador::TOTAL_DOCUMENTOS = 423;
 
-ostream& operator<<(ostream& os, const ResultadoRI& res){
+ostream& operator<<(ostream& os, const ResultadoRI& res) {
     os << res.vSimilitud << "\t\t" << res.idDoc << "\t" << res.numPregunta << endl;
     return os;
 }
@@ -30,10 +31,17 @@ ostream& operator<<(ostream& os, const Buscador& bus)
     return os;
 }
 
+ResultadoRI::ResultadoRI()
+{
+    idDoc = -1;
+    numPregunta = -1;
+    vSimilitud = -1;
+}
+
 ResultadoRI::ResultadoRI(const double & kvSimilitud, const long int & kidDoc, const int & np)
 {
     vSimilitud = kvSimilitud;
-    this->idDoc = kidDoc;
+    idDoc = kidDoc;
     numPregunta = np;
 }
 
@@ -75,10 +83,7 @@ ResultadoRI& ResultadoRI::operator=(const ResultadoRI& res)
  */
 bool ResultadoRI::operator<(const ResultadoRI &lhs) const
 {
-    if (numPregunta == lhs.numPregunta)
-        return (vSimilitud > lhs.vSimilitud);
-    else
-        return (numPregunta < lhs.numPregunta);
+    return (vSimilitud > lhs.vSimilitud);
 }
 
 Buscador::Buscador()
@@ -156,11 +161,11 @@ void Buscador::guardarNombresDocs()
 
 Buscador::Buscador(const string& directorioIndexacion, const int& f) : IndexadorHash(directorioIndexacion)
 {
-    numDocsBuscados = 0;
     formSimilitud = f;
     b = Buscador::DEFAULT_B;
     c = Buscador::DEFAULT_C;
     k1 = Buscador::DEFAULT_K1;
+    busqueda_str.reserve(TOTAL_DOCUMENTOS * TOTAL_PREGUNTAS * 40);
     guardarNombresDocs();
     precalcular_offline();
 }
@@ -169,8 +174,9 @@ void Buscador::copy_vals(const Buscador& bus)
 {
     nombresDocsSinRuta = bus.nombresDocsSinRuta;
     nombresDocs = bus.nombresDocs;
-    numDocsBuscados = bus.numDocsBuscados;
-    docsOrdenados = bus.docsOrdenados;
+    for (unsigned i = 0; i < TOTAL_PREGUNTAS; i++)
+        for (unsigned j = 0; j < TOTAL_DOCUMENTOS; j++)
+            docsOrdenados[i][j] = bus.docsOrdenados[i][j];
     formSimilitud = bus.formSimilitud;
     b = bus.b;
     c = bus.c;
@@ -195,12 +201,15 @@ Buscador& Buscador::operator=(const Buscador& bus)
 
 /**
  * @brief Calcula los valores de similitud de los documentos con tokens
- * presentes en la query con la misma. A�ade ResultadoRI's al vector docsOrdenados. No ordena
- * el vector.
+ * presentes en la query con la misma. A�ade ResultadoRI's al vector correspondiente
+ * del vector de vectores docsOrdenados. Sí ordena este vector.
  * @param num_pregunta 0 si s�lo es una
  */
-inline void Buscador::calc_simil_docs(const size_t& num_pregunta)
+inline void Buscador::calc_simil_docs(const size_t& num_pregunta_ori)
 {
+    unsigned num_pregunta = num_pregunta_ori;
+    if (num_pregunta)
+        num_pregunta--;
     unordered_map<long int, double> resultados_parciales;
     for (const auto& entrada_indice_pregunta : indicePregunta)
     {
@@ -227,24 +236,22 @@ inline void Buscador::calc_simil_docs(const size_t& num_pregunta)
             }
         }
     }
+    unsigned doc_pos = 0;
     for (const auto& fila_similitud : resultados_parciales)
     {
-        docsOrdenados[numDocsBuscados] = 
-        ResultadoRI(fila_similitud.second, fila_similitud.first, num_pregunta);
-        numDocsBuscados++;
+        docsOrdenados[num_pregunta][doc_pos].setVSimilitud(fila_similitud.second);
+        docsOrdenados[num_pregunta][doc_pos].setIdDoc(fila_similitud.first);
+        docsOrdenados[num_pregunta][doc_pos].setNumPregunta(num_pregunta);
+        doc_pos++;
     }
+    sort(docsOrdenados[num_pregunta], docsOrdenados[num_pregunta] + doc_pos);
 }
 
 bool Buscador::Buscar(const int& numDocumentos)
 {
     if (indicePregunta.size())
     {
-        if (docsOrdenados.empty())
-            docsOrdenados = vector<ResultadoRI>(informacionColeccionDocs.numDocs , ResultadoRI(0, -1, 0));
-        numDocsBuscados = 0;
         calc_simil_docs(0);
-        sort(docsOrdenados.begin(), docsOrdenados.begin() + numDocsBuscados);
-        numDocsBuscados = min(numDocsBuscados, (size_t) numDocumentos);
         return true;
     }
     cerr << "ERROR: no hay ninguna pregunta indexada" << endl;
@@ -273,24 +280,13 @@ void Buscador::indexar_pregunta(const size_t& num_pregunta, const string& dirPre
 
 bool Buscador::Buscar(const string& dirPreguntas, const int& numDocumentos, const int& numPregInicio, const int& numPregFin)
 {
-    docsOrdenados = vector<ResultadoRI>(informacionColeccionDocs.numDocs * numPregFin - numPregInicio + 1, ResultadoRI(0, -1, 0));
     if (Tokenizador::file_exists(dirPreguntas))
     {
-        numDocsBuscados = 0;
-        size_t numDocsOrdenados = 0;
         for (size_t num_pregunta = numPregInicio; num_pregunta <= numPregFin; num_pregunta++)
         {
             indexar_pregunta(num_pregunta, dirPreguntas);
-            size_t tam_vector_prev = numDocsBuscados;
             calc_simil_docs(num_pregunta);
-            size_t nuevos_docs_buscados = numDocsBuscados - tam_vector_prev;
-            if (nuevos_docs_buscados > numDocumentos)
-            {
-                sort(docsOrdenados.begin() + numDocsOrdenados, docsOrdenados.begin() + numDocsBuscados);
-                numDocsBuscados = numDocsOrdenados = tam_vector_prev + numDocumentos;
-            }
         }
-        sort(docsOrdenados.begin() + numDocsOrdenados, docsOrdenados.begin() + numDocsBuscados);
         return true;
     }
     cerr << "ERROR: No existe el directorio " << dirPreguntas << endl;
@@ -300,45 +296,37 @@ bool Buscador::Buscar(const string& dirPreguntas, const int& numDocumentos, cons
 
 void Buscador::imprimir_busqueda_str(const int& maxDocsPregunta)
 {
-    busqueda_str.reserve(numDocsBuscados * 40);
-    const bool conjuntoPreguntas = docsOrdenados[0].NumPregunta();
-    size_t docs_impresos_pregunta = 0;
-    size_t docs_impresos_total = 0;
-    while (docs_impresos_total != numDocsBuscados)
+    bool conjuntoPreguntas = docsOrdenados[1][0].IdDoc() != -1;
+    for (unsigned num_pregunta = 0; num_pregunta < TOTAL_PREGUNTAS; num_pregunta++)
     {
-        const bool maximoSuperado = (docs_impresos_pregunta + 1) == maxDocsPregunta;
-        ResultadoRI res = docsOrdenados[docs_impresos_total];
-        string nombreSinRuta = nombresDocsSinRuta[res.IdDoc()];
-        busqueda_str += to_string(res.NumPregunta());
-        busqueda_str += " ";
-        if (formSimilitud)
-            busqueda_str += "BM25 ";
-        else
-            busqueda_str += "DFR ";
-        busqueda_str += nombreSinRuta;
-        busqueda_str += " ";
-        busqueda_str += to_string(docs_impresos_pregunta);
-        busqueda_str += " ";
-        busqueda_str += to_string(res.VSimilitud());
-        busqueda_str += " ";
-        if (conjuntoPreguntas)
-            busqueda_str += "ConjuntoDePreguntas\n";
-        else
+        if (!conjuntoPreguntas && num_pregunta != 0)
+            break;
+        for (unsigned num_doc = 0; num_doc < TOTAL_DOCUMENTOS; num_doc++)
         {
-            busqueda_str += Pregunta();
-            busqueda_str += "\n";
+            ResultadoRI res = docsOrdenados[num_pregunta][num_doc];
+            if (res.IdDoc() == -1 || num_doc == maxDocsPregunta)
+                break;
+            string nombreSinRuta = nombresDocsSinRuta[res.IdDoc()];
+            busqueda_str += to_string(res.NumPregunta());
+            busqueda_str += " ";
+            if (formSimilitud)
+                busqueda_str += "BM25 ";
+            else
+                busqueda_str += "DFR ";
+            busqueda_str += nombreSinRuta;
+            busqueda_str += " ";
+            busqueda_str += to_string(num_doc);
+            busqueda_str += " ";
+            busqueda_str += to_string(res.VSimilitud());
+            busqueda_str += " ";
+            if (conjuntoPreguntas)
+                busqueda_str += "ConjuntoDePreguntas\n";
+            else
+            {
+                busqueda_str += Pregunta();
+                busqueda_str += "\n";
+            }
         }
-        docs_impresos_pregunta++;
-        docs_impresos_total++;
-        const size_t numPreguntaPrev = docsOrdenados[docs_impresos_total - 1].NumPregunta();
-        if (maximoSuperado)
-        {
-            while (docs_impresos_total != numDocsBuscados &&
-                   numPreguntaPrev == docsOrdenados[docs_impresos_total].NumPregunta())
-                docs_impresos_total++;
-        }
-        if (numPreguntaPrev != docsOrdenados[docs_impresos_total].NumPregunta())
-            docs_impresos_pregunta = 0;
     }
 }
 
