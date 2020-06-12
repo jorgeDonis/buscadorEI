@@ -307,7 +307,7 @@ void Buscador::imprimir_busqueda_str(const int& maxDocsPregunta)
             if (res.IdDoc() == -1 || num_doc == maxDocsPregunta)
                 break;
             string nombreSinRuta = nombresDocsSinRuta[res.IdDoc()];
-            busqueda_str += to_string(res.NumPregunta());
+            busqueda_str += to_string(res.NumPregunta() + 1);
             busqueda_str += " ";
             if (formSimilitud)
                 busqueda_str += "BM25 ";
