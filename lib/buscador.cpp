@@ -107,6 +107,8 @@ inline void Buscador::precalcular_dfr()
         double lambda = (double) it_indice.second.ftc / informacionColeccionDocs.numDocs;
         for (auto& it_ldocs : it_indice.second.l_docs)
         {
+            if (it_indice.first == "HENRY" && nombresDocs[it_ldocs.first] == "/home/jorge/Desktop/EI/practica/buscadorEI/resources/materiales_buscador/CorpusTime/Documentos/323.tim")
+                cout << "foo";
             double ftd = it_ldocs.second.ft;
             size_t ld = indiceDocs[nombresDocs[it_ldocs.first]].numPalSinParada;
             double ftd_norm = ftd * log2(1 + c * avr_ld / (double) ld);
