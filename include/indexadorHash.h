@@ -81,6 +81,7 @@ class IndexadorHash
         bool IndexarDirectorio(const std::string&);
         bool GuardarIndexacion() const;
         bool RecuperarIndexacion (const std::string& directorioIndexacion);
+        bool indexar_tokens_pregunta(const char*);
         bool IndexarPregunta(const std::string&);
         bool DevuelvePregunta(std::string& preg) const;
         bool DevuelvePregunta(const std::string&, InformacionTerminoPregunta&);

@@ -45,9 +45,11 @@ class Buscador: public IndexadorHash
         std::unordered_map<long int, std::string> nombresDocsSinRuta;
         std::string busqueda_str; //TODO optimizar con char*
         int formSimilitud;
+        bool conjuntoPreguntas;
         double c;
         double k1;
         double b;
+        void limpiar_docs_ordenados();
         void precalcular_bm25();
         void precalcular_dfr();
         void precalcular_offline();

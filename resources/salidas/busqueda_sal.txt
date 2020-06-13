@@ -1,4 +1,0 @@
-2 DFR 323 0 3.568787 ConjuntoDePreguntas
-2 DFR 326 1 3.459372 ConjuntoDePreguntas
-2 DFR 334 2 3.430539 ConjuntoDePreguntas
-

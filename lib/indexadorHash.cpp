@@ -431,29 +431,27 @@ void IndexadorHash::VaciarIndicePreg()
 }
 
 /**
- * @brief Actualiza pregunta, indicePregunta e infPregunta
+ * @brief Indexa los tokens separados por 30 y finalizados en /n contenidos
+ * en tokens. Libera del heap el puntero tokens.
  * 
- * @param pregunta 
+ * @param tokens 
  * @return true 
  * @return false si falta memoria
  */
-bool IndexadorHash::IndexarPregunta(const string& pregunta)
+bool IndexadorHash::indexar_tokens_pregunta(const char* tokens)
 {
-    VaciarIndicePreg();
-    this->pregunta = pregunta;
     try
     {
         int posTerm = -1;
-        char* tokens = tok.TokenizarString(pregunta);
         unsigned tokens_it = 0;
         while (tokens[tokens_it] != '\0')
         {
             string token = "";
             while (tokens[tokens_it] != 30)
-                {
-                    token += tokens[tokens_it];
-                    tokens_it++;
-                }
+            {
+                token += tokens[tokens_it];
+                tokens_it++;
+            }
             if (token == "")
                 break;
             stemmer.stemmer(token, tipoStemmer);
@@ -473,6 +471,20 @@ bool IndexadorHash::IndexarPregunta(const string& pregunta)
         return false;
     }
     return true;
+}
+
+/**
+ * @brief Actualiza pregunta, indicePregunta e infPregunta
+ * 
+ * @param pregunta 
+ * @return true 
+ * @return false si falta memoria
+ */
+bool IndexadorHash::IndexarPregunta(const string& pregunta)
+{
+    VaciarIndicePreg();
+    this->pregunta = pregunta;
+    return indexar_tokens_pregunta(tok.TokenizarString(pregunta));
 }
 
 void IndexadorHash::ImprimirPregunta() const

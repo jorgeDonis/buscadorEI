@@ -107,8 +107,6 @@ inline void Buscador::precalcular_dfr()
         double lambda = (double) it_indice.second.ftc / informacionColeccionDocs.numDocs;
         for (auto& it_ldocs : it_indice.second.l_docs)
         {
-            if (it_indice.first == "HENRY" && nombresDocs[it_ldocs.first] == "/home/jorge/Desktop/EI/practica/buscadorEI/resources/materiales_buscador/CorpusTime/Documentos/323.tim")
-                cout << "foo";
             double ftd = it_ldocs.second.ft;
             size_t ld = indiceDocs[nombresDocs[it_ldocs.first]].numPalSinParada;
             double ftd_norm = ftd * log2(1 + c * avr_ld / (double) ld);
@@ -249,10 +247,22 @@ inline void Buscador::calc_simil_docs(const size_t& num_pregunta_ori)
     sort(docsOrdenados[num_pregunta], docsOrdenados[num_pregunta] + doc_pos);
 }
 
+/**
+ * @brief Inicializa cada fila de docsOrdenados con ResultadoRI(-1,-1,-1)
+ */
+void Buscador::limpiar_docs_ordenados()
+{
+    for (unsigned i = 0; i < TOTAL_PREGUNTAS; i++)
+        for (unsigned j = 0; j < TOTAL_DOCUMENTOS; j++)
+            docsOrdenados[i][j] = ResultadoRI(-1,-1,-1);
+}
+
 bool Buscador::Buscar(const int& numDocumentos)
 {
     if (indicePregunta.size())
     {
+        limpiar_docs_ordenados();
+        conjuntoPreguntas = false;
         calc_simil_docs(0);
         return true;
     }
@@ -269,21 +279,17 @@ bool Buscador::Buscar(const int& numDocumentos)
 void Buscador::indexar_pregunta(const size_t& num_pregunta, const string& dirPreguntas)
 {
     string nombre_fichero_pregunta = dirPreguntas + "/" + to_string(num_pregunta) + ".txt";
-    ifstream fichero_pregunta(nombre_fichero_pregunta, ios::in | ios::binary | ios::ate);
-    size_t file_size = fichero_pregunta.tellg();
-    char *memblock = (char *)malloc(file_size);
-    fichero_pregunta.seekg(0, ios::beg);
-    fichero_pregunta.read(memblock, file_size - 1); // para no leer el /n
-    fichero_pregunta.close();
-    string pregunta(memblock);
-    free(memblock);
-    IndexarPregunta(pregunta);
+    VaciarIndicePreg();
+    char* tokens = tok.TokenizarFichero(nombre_fichero_pregunta);
+    indexar_tokens_pregunta(tokens);
 }
 
 bool Buscador::Buscar(const string& dirPreguntas, const int& numDocumentos, const int& numPregInicio, const int& numPregFin)
 {
     if (Tokenizador::file_exists(dirPreguntas))
     {
+        conjuntoPreguntas = true;
+        limpiar_docs_ordenados();
         for (size_t num_pregunta = numPregInicio; num_pregunta <= numPregFin; num_pregunta++)
         {
             indexar_pregunta(num_pregunta, dirPreguntas);
@@ -298,7 +304,6 @@ bool Buscador::Buscar(const string& dirPreguntas, const int& numDocumentos, cons
 
 void Buscador::imprimir_busqueda_str(const int& maxDocsPregunta)
 {
-    bool conjuntoPreguntas = docsOrdenados[1][0].IdDoc() != -1;
     for (unsigned num_pregunta = 0; num_pregunta < TOTAL_PREGUNTAS; num_pregunta++)
     {
         if (!conjuntoPreguntas && num_pregunta != 0)

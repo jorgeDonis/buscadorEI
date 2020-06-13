@@ -26,6 +26,6 @@ int main()
 	b.GuardarIndexacion();
 	Buscador a("./indicePruebaEspanyol", 0);
 
-	a.Buscar("/home/jorge/Desktop/EI/practica/buscadorEI/resources/materiales_buscador/CorpusTime/Preguntas/", 3, 2, 2);
-	a.ImprimirResultadoBusqueda(3, "/home/jorge/Desktop/EI/practica/buscadorEI/resources/salidas/busqueda_sal.txt");
+	a.Buscar("/home/jorge/Desktop/EI/practica/buscadorEI/resources/materiales_buscador/CorpusTime/Preguntas/", 999, 1, 83);
+	a.ImprimirResultadoBusqueda(999, "/home/jorge/Desktop/EI/practica/buscadorEI/resources/salidas/busqueda_sal.txt");
 }

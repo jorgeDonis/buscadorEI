@@ -62,7 +62,7 @@ class InfDoc
     public:
         InfDoc();
         InfDoc(const InfDoc&);
-        ~InfDoc() {DOC_ID--;}
+        ~InfDoc() {;}
         InfDoc& operator=(const InfDoc&);
 };
 
