@@ -35,7 +35,7 @@ ResultadoRI::ResultadoRI()
 {
     idDoc = -1;
     numPregunta = -1;
-    vSimilitud = -1;
+    vSimilitud = 0;
 }
 
 ResultadoRI::ResultadoRI(const double & kvSimilitud, const long int & kidDoc, const int & np)
@@ -72,6 +72,11 @@ ResultadoRI& ResultadoRI::operator=(const ResultadoRI& res)
         copy_vals(res);
     }
     return *this;
+}
+
+void ResultadoRI::sumarSimilitud(const double& simAdi)
+{
+    vSimilitud += simAdi;
 }
 
 /**
@@ -177,6 +182,10 @@ void Buscador::copy_vals(const Buscador& bus)
     for (unsigned i = 0; i < TOTAL_PREGUNTAS; i++)
         for (unsigned j = 0; j < TOTAL_DOCUMENTOS; j++)
             docsOrdenados[i][j] = bus.docsOrdenados[i][j];
+    busqueda_str = bus.busqueda_str;
+    conjuntoPreguntas = bus.conjuntoPreguntas;
+    preg_inicial = bus.preg_inicial;
+    preg_final = bus.preg_final;
     formSimilitud = bus.formSimilitud;
     b = bus.b;
     c = bus.c;
@@ -203,14 +212,11 @@ Buscador& Buscador::operator=(const Buscador& bus)
  * @brief Calcula los valores de similitud de los documentos con tokens
  * presentes en la query con la misma. A�ade ResultadoRI's al vector correspondiente
  * del vector de vectores docsOrdenados. Sí ordena este vector.
- * @param num_pregunta 0 si s�lo es una
+ * @param num_pregunta 0 si s�lo es una. La pregunta 1 ha de ser 0 (se tiene que restar
+ * antes de llamar a este método)
  */
-inline void Buscador::calc_simil_docs(const size_t& num_pregunta_ori)
+inline void Buscador::calc_simil_docs(const size_t& num_pregunta)
 {
-    unsigned num_pregunta = num_pregunta_ori;
-    if (num_pregunta)
-        num_pregunta--;
-    unordered_map<long int, double> resultados_parciales;
     for (const auto& entrada_indice_pregunta : indicePregunta)
     {
         const unordered_map<string, InformacionTermino>::const_iterator it_indice_tok 
@@ -219,8 +225,6 @@ inline void Buscador::calc_simil_docs(const size_t& num_pregunta_ori)
         {
             for (const auto& entrada_l_docs : it_indice_tok->second.l_docs)
             {
-                unordered_map<long int, double>::iterator parciales_it =
-                resultados_parciales.find(entrada_l_docs.first);
                 double sim_parcial;
                 if (formSimilitud == 0)
                 {
@@ -229,32 +233,22 @@ inline void Buscador::calc_simil_docs(const size_t& num_pregunta_ori)
                 }
                 else
                     sim_parcial = entrada_l_docs.second.bm25_parcial;
-                if (parciales_it == resultados_parciales.end())
-                    resultados_parciales.emplace(entrada_l_docs.first, sim_parcial);
-                else
-                    parciales_it->second += sim_parcial;
+                docsOrdenados[num_pregunta][entrada_l_docs.first - 1].sumarSimilitud(sim_parcial);
             }
         }
     }
-    unsigned doc_pos = 0;
-    for (const auto& fila_similitud : resultados_parciales)
-    {
-        docsOrdenados[num_pregunta][doc_pos].setVSimilitud(fila_similitud.second);
-        docsOrdenados[num_pregunta][doc_pos].setIdDoc(fila_similitud.first);
-        docsOrdenados[num_pregunta][doc_pos].setNumPregunta(num_pregunta);
-        doc_pos++;
-    }
-    sort(docsOrdenados[num_pregunta], docsOrdenados[num_pregunta] + doc_pos);
+    sort(begin(docsOrdenados[num_pregunta]), end(docsOrdenados[num_pregunta]));
 }
 
 /**
- * @brief Inicializa cada fila de docsOrdenados con ResultadoRI(-1,-1,-1)
+ * @brief Inicializa cada fila de docsOrdenados con similitud a 0 y la pregunta
+ * correspondiente a su posición en la matriz. idDoc = apropiado
  */
 void Buscador::limpiar_docs_ordenados()
 {
     for (unsigned i = 0; i < TOTAL_PREGUNTAS; i++)
         for (unsigned j = 0; j < TOTAL_DOCUMENTOS; j++)
-            docsOrdenados[i][j] = ResultadoRI(-1,-1,-1);
+            docsOrdenados[i][j] = ResultadoRI(0, j + 1, i + 1);
 }
 
 bool Buscador::Buscar(const int& numDocumentos)
@@ -290,10 +284,13 @@ bool Buscador::Buscar(const string& dirPreguntas, const int& numDocumentos, cons
     {
         conjuntoPreguntas = true;
         limpiar_docs_ordenados();
+        preg_inicial = numPregInicio;
+        preg_final = numPregFin;
         for (size_t num_pregunta = numPregInicio; num_pregunta <= numPregFin; num_pregunta++)
         {
             indexar_pregunta(num_pregunta, dirPreguntas);
-            calc_simil_docs(num_pregunta);
+            calc_simil_docs(num_pregunta - 1);
+            nombresDocs.erase(100);
         }
         return true;
     }
@@ -302,39 +299,49 @@ bool Buscador::Buscar(const string& dirPreguntas, const int& numDocumentos, cons
     
 }
 
-void Buscador::imprimir_busqueda_str(const int& maxDocsPregunta)
+/**
+ * @brief Modifica la variable de clase busqueda_str
+ * 
+ */
+void Buscador::imprimir_res_pregunta(const unsigned& num_pregunta, const int& maxDocsPregunta)
 {
-    for (unsigned num_pregunta = 0; num_pregunta < TOTAL_PREGUNTAS; num_pregunta++)
+    unsigned docs_imprimidos = 0;
+    for (unsigned num_doc = 0; num_doc < TOTAL_DOCUMENTOS; num_doc++)
     {
-        if (!conjuntoPreguntas && num_pregunta != 0)
+        ResultadoRI res = docsOrdenados[num_pregunta][num_doc];
+        if (res.IdDoc() == 0 || docs_imprimidos == maxDocsPregunta)
             break;
-        for (unsigned num_doc = 0; num_doc < TOTAL_DOCUMENTOS; num_doc++)
+        docs_imprimidos++;
+        string nombreSinRuta = nombresDocsSinRuta[res.IdDoc()];
+        busqueda_str += to_string(res.NumPregunta());
+        busqueda_str += " ";
+        if (formSimilitud)
+            busqueda_str += "BM25 ";
+        else
+            busqueda_str += "DFR ";
+        busqueda_str += nombreSinRuta;
+        busqueda_str += " ";
+        busqueda_str += to_string(num_doc);
+        busqueda_str += " ";
+        busqueda_str += to_string(res.VSimilitud());
+        busqueda_str += " ";
+        if (conjuntoPreguntas)
+            busqueda_str += "ConjuntoDePreguntas\n";
+        else
         {
-            ResultadoRI res = docsOrdenados[num_pregunta][num_doc];
-            if (res.IdDoc() == -1 || num_doc == maxDocsPregunta)
-                break;
-            string nombreSinRuta = nombresDocsSinRuta[res.IdDoc()];
-            busqueda_str += to_string(res.NumPregunta() + 1);
-            busqueda_str += " ";
-            if (formSimilitud)
-                busqueda_str += "BM25 ";
-            else
-                busqueda_str += "DFR ";
-            busqueda_str += nombreSinRuta;
-            busqueda_str += " ";
-            busqueda_str += to_string(num_doc);
-            busqueda_str += " ";
-            busqueda_str += to_string(res.VSimilitud());
-            busqueda_str += " ";
-            if (conjuntoPreguntas)
-                busqueda_str += "ConjuntoDePreguntas\n";
-            else
-            {
-                busqueda_str += Pregunta();
-                busqueda_str += "\n";
-            }
+            busqueda_str += Pregunta();
+            busqueda_str += "\n";
         }
     }
+}
+
+void Buscador::imprimir_busqueda_str(const int& maxDocsPregunta)
+{
+    if (!conjuntoPreguntas)
+        imprimir_res_pregunta(0, maxDocsPregunta);
+    else
+        for (unsigned num_pregunta = preg_inicial; num_pregunta <= preg_final; num_pregunta++)
+            imprimir_res_pregunta(num_pregunta - 1, maxDocsPregunta);
 }
 
 void Buscador::ImprimirResultadoBusqueda(const int& maxDocsPregunta)

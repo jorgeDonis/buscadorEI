@@ -28,6 +28,7 @@ class ResultadoRI
         void setIdDoc(const int& id) { idDoc = id; }
         void setNumPregunta(const int& preg) { numPregunta = preg; }
         bool operator<(const ResultadoRI& lhs) const;
+        void sumarSimilitud(const double&);
 
 };
 
@@ -46,6 +47,8 @@ class Buscador: public IndexadorHash
         std::string busqueda_str; //TODO optimizar con char*
         int formSimilitud;
         bool conjuntoPreguntas;
+        unsigned preg_inicial;
+        unsigned preg_final;
         double c;
         double k1;
         double b;
@@ -56,7 +59,8 @@ class Buscador: public IndexadorHash
         void guardarNombresDocs();
         void copy_vals(const Buscador&);
         void calc_simil_docs(const size_t&);
-        void imprimir_busqueda_str(const int& numDocumentos = 99999);
+        void imprimir_res_pregunta(const unsigned &num_pregunta, const int& numDocumentos);
+        void imprimir_busqueda_str(const int& numDocumentos);
         void indexar_pregunta(const size_t&, const std::string&);
         Buscador();
     public:

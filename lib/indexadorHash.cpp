@@ -268,11 +268,10 @@ void IndexadorHash::eliminar_doc(const string& nombreDoc)
  */
 bool IndexadorHash::indexar_documento(const string& nombreDoc)
 {
-    pair<unordered_map<string, InfDoc>::iterator, bool> it;
-    InfDoc infdoc;
+    unordered_map<string, InfDoc>::iterator it;
     try
     {
-        it = indiceDocs.insert(pair<string, InfDoc>(nombreDoc, infdoc));
+        it = indiceDocs.emplace(piecewise_construct, forward_as_tuple(nombreDoc), forward_as_tuple()).first;
         informacionColeccionDocs.numDocs++;
     }
     catch (bad_alloc& e)
@@ -280,7 +279,7 @@ bool IndexadorHash::indexar_documento(const string& nombreDoc)
         cerr << "ERROR: falta de memoria al insertar en indiceDocs" << endl;
         return false;
     }
-    return indexar_documento(it.first->second, nombreDoc);
+    return indexar_documento(it->second, nombreDoc);
 }
 
 inline void IndexadorHash::actualizar_indice(const string& token, InfDoc& infdoc, int posTerm)
@@ -438,7 +437,7 @@ void IndexadorHash::VaciarIndicePreg()
  * @return true 
  * @return false si falta memoria
  */
-bool IndexadorHash::indexar_tokens_pregunta(const char* tokens)
+bool IndexadorHash::indexar_tokens_pregunta(char* tokens)
 {
     try
     {
@@ -463,7 +462,7 @@ bool IndexadorHash::indexar_tokens_pregunta(const char* tokens)
             infPregunta.numTotalPalSinParada++;
             actualizar_indice_pregunta(token, posTerm);
         }
-        delete[] tokens;
+        free(tokens);
     }
     catch (bad_alloc& e)
     {

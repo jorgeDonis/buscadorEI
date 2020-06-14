@@ -253,12 +253,12 @@ char* Tokenizador::TokenizarFichero(const string& input_filename)
  * 
  * @param str String a tokenizar
  * @return char* sigue el mismo formato que TokenizarFichero(str). Tiene que ser liberado
- * posteriormente
+ * posteriormente con free
  */
 
 char* Tokenizador::TokenizarString(const string& str)
 {
-    char* output_map = new char[str.size() + 20]; //este 20 es por si falta memoria
+    char* output_map = (char*) malloc(str.size() + 20); //este 20 es por si falta memoria
     if (casosEspeciales)
         Tokenizar_fichero_especial(str.c_str(), output_map, str.size());
     else
