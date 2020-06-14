@@ -88,7 +88,11 @@ void ResultadoRI::sumarSimilitud(const double& simAdi)
  */
 bool ResultadoRI::operator<(const ResultadoRI &lhs) const
 {
-    return (vSimilitud > lhs.vSimilitud);
+    if (!vSimilitud)
+        return false;
+    if (!lhs.vSimilitud)
+        return true;
+    return vSimilitud > lhs.vSimilitud;
 }
 
 Buscador::Buscador()
@@ -237,7 +241,7 @@ inline void Buscador::calc_simil_docs(const size_t& num_pregunta)
             }
         }
     }
-    sort(begin(docsOrdenados[num_pregunta]), end(docsOrdenados[num_pregunta]));
+    sort(docsOrdenados[num_pregunta], docsOrdenados[num_pregunta] + TOTAL_DOCUMENTOS);
 }
 
 /**
@@ -290,7 +294,6 @@ bool Buscador::Buscar(const string& dirPreguntas, const int& numDocumentos, cons
         {
             indexar_pregunta(num_pregunta, dirPreguntas);
             calc_simil_docs(num_pregunta - 1);
-            nombresDocs.erase(100);
         }
         return true;
     }
@@ -309,7 +312,7 @@ void Buscador::imprimir_res_pregunta(const unsigned& num_pregunta, const int& ma
     for (unsigned num_doc = 0; num_doc < TOTAL_DOCUMENTOS; num_doc++)
     {
         ResultadoRI res = docsOrdenados[num_pregunta][num_doc];
-        if (res.IdDoc() == 0 || docs_imprimidos == maxDocsPregunta)
+        if (res.VSimilitud() == 0 || docs_imprimidos == maxDocsPregunta)
             break;
         docs_imprimidos++;
         string nombreSinRuta = nombresDocsSinRuta[res.IdDoc()];
@@ -338,7 +341,15 @@ void Buscador::imprimir_res_pregunta(const unsigned& num_pregunta, const int& ma
 void Buscador::imprimir_busqueda_str(const int& maxDocsPregunta)
 {
     if (!conjuntoPreguntas)
+    {
+        for (unsigned i = 0; i < TOTAL_DOCUMENTOS; i++)
+        {
+            if (!docsOrdenados[0][i].VSimilitud())
+                break;
+            docsOrdenados[0][i].reducirPregunta();
+        }
         imprimir_res_pregunta(0, maxDocsPregunta);
+    }
     else
         for (unsigned num_pregunta = preg_inicial; num_pregunta <= preg_final; num_pregunta++)
             imprimir_res_pregunta(num_pregunta - 1, maxDocsPregunta);

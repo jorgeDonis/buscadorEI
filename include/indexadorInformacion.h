@@ -49,7 +49,6 @@ class InfDoc
     friend class IndexadorHash;
     friend class GestorFicheros;
     friend class Debugger;
-    static long int DOC_ID;
     friend std::ostream& operator<<(std::ostream&, const InfDoc&);
     private:
         long int idDoc;
@@ -60,6 +59,7 @@ class InfDoc
         time_t fechaModificacion;
         void copy_vals(const InfDoc&);
     public:
+        static long int DOC_ID;
         InfDoc();
         InfDoc(const InfDoc&);
         ~InfDoc() {;}

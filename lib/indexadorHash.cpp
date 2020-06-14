@@ -63,6 +63,7 @@ ostream& operator<<(ostream& os, const IndexadorHash& index)
 
 IndexadorHash::IndexadorHash()
 {
+    InfDoc::DOC_ID = 1;
     tok.DelimitadoresPalabra(tok.delimiters);
     pregunta = "";
     ficheroStopWords = "";
@@ -131,6 +132,7 @@ IndexadorHash::IndexadorHash(const std::string &fichStopWords, const std::string
                              const int &tStemmer, const bool &almEnDisco, const bool &almPosTerm)
                              : tok(delimitadores, detectComp, minuscSinAcentos)
 {
+    InfDoc::DOC_ID = 1;
     tipoStemmer = tStemmer;
     if (leer_fichero_stopwords(fichStopWords, minuscSinAcentos))
     {
@@ -209,6 +211,7 @@ bool IndexadorHash::GuardarIndexacion() const
 
 IndexadorHash::IndexadorHash(const string& directorioIndexacion)
 {
+    InfDoc::DOC_ID = 1;
     if (!Tokenizador::file_exists(directorioIndexacion))
         cerr << "ERROR: el directorio " << directorioIndexacion << " no existe" << endl;
     else if (!Tokenizador::is_dir(directorioIndexacion))

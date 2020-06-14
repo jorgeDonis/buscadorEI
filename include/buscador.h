@@ -24,6 +24,7 @@ class ResultadoRI
         double VSimilitud() const {return vSimilitud;}
         long int IdDoc() const {return idDoc;}
         int NumPregunta() const {return numPregunta;}
+        void reducirPregunta() {numPregunta--;}
         void setVSimilitud(const double& sim) { vSimilitud = sim; }
         void setIdDoc(const int& id) { idDoc = id; }
         void setNumPregunta(const int& preg) { numPregunta = preg; }
